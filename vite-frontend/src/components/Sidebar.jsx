@@ -3,17 +3,35 @@ import { Home, Users, FileText, Activity, Calendar } from "lucide-react";
 
 function Sidebar() {
   const location = useLocation();
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  const menu = [
-    { name: "Dashboard", path: "/dashboard", icon: <Home /> },
-    { name: "Patients", path: "/patients", icon: <Users /> },
-    { name: "Add Patient", path: "/add-patient", icon: <Users /> },
-    { name: "Add Visit", path: "/add-visit", icon: <Activity /> },
-    { name: "Claims", path: "/claims", icon: <FileText /> },
+  let menu = [];
 
-    // ✅ ADD THIS LINE
-    { name: "Appointment", path: "/appointment", icon: <Calendar /> },
-  ];
+  // ✅ ADMIN MENU
+  if (user?.role === "admin") {
+    menu = [
+      { name: "Dashboard", path: "/dashboard", icon: <Home /> },
+      { name: "Patients", path: "/patients", icon: <Users /> },
+      { name: "Add Patient", path: "/add-patient", icon: <Users /> },
+      { name: "Claims", path: "/claims", icon: <FileText /> },
+    ];
+  }
+
+  // ✅ DOCTOR MENU
+  if (user?.role === "doctor") {
+    menu = [
+      { name: "Doctor Dashboard", path: "/doctor-dashboard", icon: <Home /> },
+      { name: "Appointments", path: "/appointments", icon: <Calendar /> },
+      { name: "Add Visit", path: "/add-visit", icon: <Activity /> },
+    ];
+  }
+
+  // ✅ PATIENT MENU
+  if (user?.role === "patient") {
+    menu = [
+      { name: "Book Appointment", path: "/appointments", icon: <Calendar /> },
+    ];
+  }
 
   return (
     <div className="w-64 bg-white shadow-lg">
@@ -27,9 +45,7 @@ function Sidebar() {
             key={i}
             to={item.path}
             className={`flex items-center gap-3 p-2 rounded hover:bg-blue-100 ${
-              location.pathname === item.path
-                ? "bg-blue-200"
-                : ""
+              location.pathname === item.path ? "bg-blue-200" : ""
             }`}
           >
             {item.icon}

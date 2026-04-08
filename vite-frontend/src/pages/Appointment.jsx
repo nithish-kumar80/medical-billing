@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import API from "../services/api";
 
 function Appointment() {
@@ -9,41 +9,79 @@ function Appointment() {
     time: ""
   });
 
-  const [appointments, setAppointments] = useState([]);
-
-  const fetchAppointments = async () => {
-    const res = await API.get("/appointments");
-    setAppointments(res.data);
-  };
-
-  useEffect(() => {
-    fetchAppointments();
-  }, []);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await API.post("/appointments", form);
-    fetchAppointments();
+
+    try {
+      await API.post("/appointments", form);
+      alert("Appointment booked successfully");
+
+      setForm({
+        patient_id: "",
+        doctor_name: "",
+        date: "",
+        time: ""
+      });
+
+    } catch (err) {
+      console.error(err);
+      alert("Error booking appointment");
+    }
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">Appointments</h2>
+    <div className="p-6 max-w-lg mx-auto">
 
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input placeholder="Patient ID" onChange={(e)=>setForm({...form, patient_id:e.target.value})} />
-        <input placeholder="Doctor Name" onChange={(e)=>setForm({...form, doctor_name:e.target.value})} />
-        <input type="date" onChange={(e)=>setForm({...form, date:e.target.value})} />
-        <input type="time" onChange={(e)=>setForm({...form, time:e.target.value})} />
+      <h2 className="text-2xl font-bold mb-4">
+        Book Appointment
+      </h2>
 
-        <button className="bg-green-500 text-white px-4 py-2">Add</button>
+      <form onSubmit={handleSubmit} className="space-y-4">
+
+        <input
+          placeholder="Patient ID"
+          value={form.patient_id}
+          onChange={(e) =>
+            setForm({ ...form, patient_id: e.target.value })
+          }
+          className="border p-2 w-full"
+        />
+
+        <input
+          placeholder="Doctor Name"
+          value={form.doctor_name}
+          onChange={(e) =>
+            setForm({ ...form, doctor_name: e.target.value })
+          }
+          className="border p-2 w-full"
+        />
+
+        <input
+          type="date"
+          value={form.date}
+          onChange={(e) =>
+            setForm({ ...form, date: e.target.value })
+          }
+          className="border p-2 w-full"
+        />
+
+        <input
+          type="time"
+          value={form.time}
+          onChange={(e) =>
+            setForm({ ...form, time: e.target.value })
+          }
+          className="border p-2 w-full"
+        />
+
+        <button
+          type="submit"
+          className="bg-green-600 text-white w-full p-2 rounded"
+        >
+          Book Appointment
+        </button>
+
       </form>
-
-      {appointments.map(a => (
-        <div key={a._id} className="border p-3 mt-2">
-          {a.patient_id} | {a.doctor_name} | {a.date}
-        </div>
-      ))}
     </div>
   );
 }

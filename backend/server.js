@@ -4,6 +4,8 @@ const cors = require("cors");
 
 const connectDB = require("./config/mongo");
 const patientRoutes = require("./routes/patientRoutes"); // routes file
+const authRoutes = require("./routes/auth");
+
 
 const app = express();
 
@@ -15,6 +17,7 @@ connectDB();
 
 // Use routes
 app.use("/api", patientRoutes); // All routes prefixed with /api
+app.use("/api", authRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

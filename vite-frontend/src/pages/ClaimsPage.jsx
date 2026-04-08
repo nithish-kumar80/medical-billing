@@ -10,13 +10,13 @@ const pageVariant = {
 function ClaimsPage() {
   const [claims, setClaims] = useState([]);
 
-  // Fetch claims from backend
+  // ✅ Fetch claims
   const fetchClaims = async () => {
     try {
       const res = await API.get("/claims");
       setClaims(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching claims:", err);
     }
   };
 
@@ -24,13 +24,13 @@ function ClaimsPage() {
     fetchClaims();
   }, []);
 
-  // Update claim status
-  const updateStatus = async (claimId, newStatus) => {
+  // ✅ Update claim status (FIXED _id)
+  const updateStatus = async (id, newStatus) => {
     try {
-      await API.put(`/claims/${claimId}`, { status: newStatus });
-      fetchClaims(); // Refresh table after update
+      await API.put(`/claims/${id}`, { status: newStatus });
+      fetchClaims(); // refresh
     } catch (err) {
-      console.error(err);
+      console.error("Error updating claim:", err);
     }
   };
 
@@ -45,7 +45,7 @@ function ClaimsPage() {
         Insurance Claims
       </h2>
 
-      {/* 🔥 SUMMARY CARDS */}
+      {/* 🔥 SUMMARY */}
       <div className="grid grid-cols-3 gap-6 mb-6">
         <div className="bg-blue-500 text-white p-5 rounded-xl shadow">
           <h3>Total Claims</h3>
@@ -67,7 +67,7 @@ function ClaimsPage() {
         </div>
       </div>
 
-      {/* 🧾 CLAIM TABLE */}
+      {/* 🧾 TABLE */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <table className="w-full text-center">
           <thead className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
@@ -90,12 +90,10 @@ function ClaimsPage() {
                   <td>{c.visit_id}</td>
                   <td>{c.payer}</td>
 
-                  {/* 💰 CLAIM AMOUNT */}
                   <td className="font-bold text-blue-600">
-                    ₹{c.total_amount}
+                    ₹{c.total_amount || 0}
                   </td>
 
-                  {/* 🎨 STATUS BADGE */}
                   <td className="flex flex-col items-center justify-center space-y-1 p-2">
                     <span
                       className={`px-3 py-1 rounded text-white ${
@@ -109,17 +107,17 @@ function ClaimsPage() {
                       {c.status}
                     </span>
 
-                    {/* Buttons to Approve / Reject only if Pending */}
                     {c.status === "Pending" && (
                       <div className="flex space-x-2 mt-1">
                         <button
-                          onClick={() => updateStatus(c.claim_id, "Approved")}
+                          onClick={() => updateStatus(c._id, "Approved")}
                           className="bg-green-600 px-2 py-1 rounded text-white text-sm"
                         >
                           Approve
                         </button>
+
                         <button
-                          onClick={() => updateStatus(c.claim_id, "Rejected")}
+                          onClick={() => updateStatus(c._id, "Rejected")}
                           className="bg-red-600 px-2 py-1 rounded text-white text-sm"
                         >
                           Reject

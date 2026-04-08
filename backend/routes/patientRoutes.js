@@ -10,6 +10,8 @@ const Claim = require("../models/Claim");
 const Appointment = require("../models/Appointment");
 
 
+
+
 // =============================
 // 🧍 PATIENT ROUTES
 // =============================
@@ -305,6 +307,7 @@ router.get("/dashboard", async (req, res) => {
 
     const bills = await Billing.find();
     const claims = await Claim.find();
+    const appointments = await Appointment.find(); // ✅ NEW
 
     // 🔹 Total revenue
     const revenue = bills.reduce(
@@ -325,12 +328,27 @@ router.get("/dashboard", async (req, res) => {
       rejected: claims.filter(c => c.status === "Rejected").length
     };
 
+    // ✅ TODAY APPOINTMENTS
+    const today = new Date().toISOString().split("T")[0];
+
+    const todayAppointments = appointments.filter(
+      (a) => a.date === today
+    ).length;
+
+    // ✅ OP / IP logic
+    const op = visits;
+    const ip = Math.floor(visits * 0.3);
+
+    // ✅ FINAL RESPONSE (MERGED)
     res.json({
       totalPatients: patients,
       totalVisits: visits,
       totalRevenue: revenue,
-      revenueData,
-      claimStats
+      revenueData,      // 📊 chart
+      claimStats,       // 📊 chart
+      opPatients: op,   // 👨‍⚕️ doctor dashboard
+      ipPatients: ip,   // 👨‍⚕️ doctor dashboard
+      todayAppointments // 👨‍⚕️ doctor dashboard
     });
 
   } catch (err) {
@@ -377,40 +395,71 @@ router.post("/claims/:visit_id", async (req, res) => {
 
 router.get("/claims", async (req, res) => {
   try {
-    const claims = await Claim.find().sort({ createdAt: -1 });
+    const claims = await Claim.find();
     res.json(claims);
   } catch (err) {
-    res.status(500).send("Error fetching claims");
+    console.error("GET ERROR:", err);
+    res.status(500).send("Server Error");
   }
 });
 
+// ✅ UPDATE CLAIM STATUS
 router.put("/claims/:id", async (req, res) => {
   try {
-    const updatedClaim = await Claim.findOneAndUpdate(
-      { claim_id: req.params.id },
-      { status: req.body.status },
-      { new: true } // returns updated document
+    const { status } = req.body;
+
+    const updatedClaim = await Claim.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
     );
 
-    if (!updatedClaim) return res.status(404).send("Claim not found");
+    if (!updatedClaim) {
+      return res.status(404).send("Claim not found");
+    }
 
-    res.json(updatedClaim); // send updated claim
+    res.json(updatedClaim);
   } catch (err) {
-    console.error(err);
+    console.error("UPDATE ERROR:", err);
     res.status(500).send("Error updating claim");
   }
 });
 
+// =============================
+// 📅 APPOINTMENT ROUTES
+// =============================
+
+// CREATE APPOINTMENT
 router.post("/appointments", async (req, res) => {
-  const newApp = new Appointment(req.body);
-  await newApp.save();
-  res.json(newApp);
+  try {
+    const newAppointment = new Appointment(req.body);
+    await newAppointment.save();
+
+    res.json({
+      message: "Appointment created",
+      data: newAppointment
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error creating appointment");
+  }
 });
 
+// GET ALL APPOINTMENTS
 router.get("/appointments", async (req, res) => {
-  const data = await Appointment.find();
-  res.json(data);
+  try {
+    const data = await Appointment.find().sort({ createdAt: -1 });
+    res.json(data);
+  } catch (err) {
+    res.status(500).send("Error fetching appointments");
+  }
 });
+
+
+
+
+
 
 
 module.exports = router;

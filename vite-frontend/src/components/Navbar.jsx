@@ -1,17 +1,54 @@
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+
 function Navbar() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  const navigate = useNavigate();
+
+  const logout = () => {
+    localStorage.removeItem("user");
+    navigate("/");
+  };
+
   return (
-    <div className="bg-white shadow p-4 flex justify-between items-center">
+    <div className="bg-gray-900 text-white p-4 flex justify-between">
 
-      <h2 className="text-lg font-semibold">
-        Hospital Dashboard
-      </h2>
+      <h1 className="font-bold">🏥 Med System</h1>
 
-      <div className="flex items-center gap-4">
-        <span className="text-gray-600">Admin</span>
+      <div className="space-x-4">
 
-        <div className="w-8 h-8 bg-blue-500 rounded-full"></div>
+        <Link to="/">Home</Link>
+
+        {user?.role === "admin" && (
+          <>
+            <Link to="/dashboard">Dashboard</Link>
+            <Link to="/patients">Patients</Link>
+          </>
+        )}
+
+        {user?.role === "doctor" && (
+          <>
+            <Link to="/doctor-dashboard">Doctor Dashboard</Link>
+            <Link to="/appointments">Appointments</Link>
+          </>
+        )}
+
+        {user?.role === "patient" && (
+          <>
+            <Link to="/appointments">Book Appointment</Link>
+          </>
+        )}
+
+        {user && (
+          <button
+            onClick={logout}
+            className="bg-red-500 px-2 py-1 rounded"
+          >
+            Logout
+          </button>
+        )}
+
       </div>
-
     </div>
   );
 }

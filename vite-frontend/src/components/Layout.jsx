@@ -1,28 +1,27 @@
-import { Link, Outlet } from "react-router-dom";
+import Navbar from "./Navbar";
+import Sidebar from "./Sidebar";
+import { Outlet } from "react-router-dom";
 
 function Layout() {
+  const user = JSON.parse(localStorage.getItem("user"));
+
   return (
     <div className="flex h-screen">
 
-      {/* Sidebar */}
-      <div className="w-64 bg-gray-900 text-white p-5 space-y-4">
-        <h1 className="text-xl font-bold">🏥 Med System</h1>
+      {/* ✅ ROLE BASED SIDEBAR */}
+      {user && <Sidebar />}
 
-        <nav className="space-y-2">
-          <Link to="/" className="block hover:text-blue-400">Dashboard</Link>
-          <Link to="/patients" className="block hover:text-blue-400">Patients</Link>
-          <Link to="/add-patient" className="block hover:text-blue-400">Add Patient</Link>
-          <Link to="/search" className="block hover:text-blue-400">Search</Link>
-          <Link to="/claims" className="block hover:text-blue-400">Claims</Link>
-            <Link to="/appointment" className="block hover:text-blue-400">Appointment</Link>
-        </nav>
+      <div className="flex-1 flex flex-col">
+
+        {/* ✅ TOP NAVBAR */}
+        <Navbar />
+
+        {/* MAIN CONTENT */}
+        <div className="p-6 bg-gray-100 flex-1 overflow-y-auto">
+          <Outlet />
+        </div>
+
       </div>
-
-      {/* Main Content */}
-      <div className="flex-1 p-6 bg-gray-100 overflow-y-auto">
-        <Outlet />
-      </div>
-
     </div>
   );
 }
