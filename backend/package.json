@@ -1,16 +1,23 @@
 {
-  "name": "backend",
+  "name": "medical-billing-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Medical Billing System Backend API",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
     "mongoose": "^9.3.1"
   }
 }
