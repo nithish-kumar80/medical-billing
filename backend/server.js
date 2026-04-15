@@ -29,6 +29,8 @@ const corsOptions = {
       return callback(null, true);
     }
 
+    console.log("❌ CORS blocked origin:", origin);
+    console.log("✅ Allowed origins:", allowedOrigins);
     return callback(new Error("Not allowed by CORS"));
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -59,13 +61,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware
+// Middleware — parse JSON body
 app.use(express.json());
-
-/**
- * ✅ Connect DB
- */
-connectDB();
 
 /**
  * ✅ Health check routes (important for Azure)
@@ -86,9 +83,21 @@ app.use("/api", authRoutes);
 
 /**
  * ✅ Start Server (Azure uses PORT automatically)
+ * Connect to DB first, THEN start listening.
  */
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log("✅ Allowed Origins:", allowedOrigins);
+
+async function startServer() {
+  // Connect to MongoDB (won't crash if it fails)
+  await connectDB();
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log("✅ Allowed Origins:", allowedOrigins);
+    console.log("✅ Environment:", process.env.NODE_ENV || "development");
+  });
+}
+
+startServer().catch((err) => {
+  console.error("❌ Failed to start server:", err);
 });
