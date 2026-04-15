@@ -456,10 +456,75 @@ router.get("/appointments", async (req, res) => {
   }
 });
 
+// GET APPOINTMENTS BY PATIENT
+router.get("/appointments/patient/:name", async (req, res) => {
+  try {
+    const data = await Appointment.find({ patient_id: req.params.name }).sort({ createdAt: -1 });
+    res.json(data);
+  } catch (err) {
+    res.status(500).send("Error fetching patient appointments");
+  }
+});
 
+// GET APPOINTMENTS BY DOCTOR
+router.get("/appointments/doctor/:name", async (req, res) => {
+  try {
+    const data = await Appointment.find({ doctor_name: req.params.name }).sort({ createdAt: -1 });
+    res.json(data);
+  } catch (err) {
+    res.status(500).send("Error fetching doctor appointments");
+  }
+});
 
+// UPDATE APPOINTMENT STATUS
+router.patch("/appointments/:id/status", async (req, res) => {
+  try {
+    const updated = await Appointment.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).send("Error updating appointment status");
+  }
+});
 
+// =============================
+// 🗂 NATIVE PATIENT HISTORY (READ-ONLY LOOKUP BY NAME)
+// =============================
+router.get("/history/patient/:name", async (req, res) => {
+  try {
+    const patientNameRegex = new RegExp(`^${req.params.name}$`, "i");
+    const patient = await Patient.findOne({ name: patientNameRegex });
+    
+    if (!patient) {
+      return res.json({ patient: null, visits: [], treatments: [], diagnosis: [] });
+    }
 
+    const visits = await Visit.find({ patient_id: patient.patient_id }).sort({ visit_date: -1 });
+    const visitIds = visits.map(v => v.visit_id);
+    const treatments = await Treatment.find({ visit_id: { $in: visitIds } });
+    const diagnosis = await Diagnosis.find({ visit_id: { $in: visitIds } });
 
+    res.json({
+      patient,
+      visits,
+      treatments,
+      diagnosis
+    });
+
+  } catch (err) {
+    console.error("HISTORY LOOKUP ERROR:", err);
+    res.status(500).send("Error fetching history by name");
+  }
+});
+
+// GET TODAY'S APPOINTMENTS FOR ADMIN
+router.get("/appointments/today", async (req, res) => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const data = await Appointment.find({ date: today }).sort({ time: 1 });
+    res.json(data);
+  } catch (err) {
+    res.status(500).send("Error fetching today's appointments");
+  }
+});
 
 module.exports = router;

@@ -9,7 +9,7 @@ import AddVisit from "./pages/AddVisit";
 import SearchPatient from "./pages/SearchPatient";
 import BillingPage from "./pages/BillingPage";
 import ClaimsPage from "./pages/ClaimsPage";
-import Appointment from "./pages/Appointment";
+import PatientPortal from "./pages/PatientPortal";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import Login from "./pages/Login";
 
@@ -32,7 +32,7 @@ function App() {
           user ? (
             user.role === "admin" ? <Navigate to="/dashboard" /> :
             user.role === "doctor" ? <Navigate to="/doctor-dashboard" /> :
-            <Navigate to="/appointment" />
+            <Navigate to="/patient-portal" />
           ) : (
             <Navigate to="/login" />
           )
@@ -55,7 +55,7 @@ function App() {
         <Route path="claims" element={<ClaimsPage />} />
 
         {/* COMMON */}
-        <Route path="appointment" element={<Appointment />} />
+        <Route path="patient-portal" element={<PatientPortal />} />
 
         {/* DOCTOR */}
         <Route path="doctor-dashboard" element={<DoctorDashboard />} />

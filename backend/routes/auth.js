@@ -60,6 +60,15 @@ router.post("/login", async (req, res) => {
   }
 });
 
-
+// ✅ GET ALL DOCTORS
+router.get("/doctors", async (req, res) => {
+  try {
+    const doctors = await User.find({ role: "doctor" }).select("-password");
+    res.json(doctors);
+  } catch (err) {
+    console.error("❌ ERROR FETCHING DOCTORS:", err);
+    res.status(500).json({ msg: "Server error", error: err.message });
+  }
+});
 
 module.exports = router;

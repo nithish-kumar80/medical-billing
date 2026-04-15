@@ -28,8 +28,11 @@ function Dashboard() {
     claimStats: {}
   });
 
+  const [doctors, setDoctors] = useState([]);
+
   useEffect(() => {
     fetchDashboard();
+    fetchDoctors();
   }, []);
 
   const fetchDashboard = async () => {
@@ -38,6 +41,15 @@ function Dashboard() {
       setData(res.data);
     } catch (err) {
       console.error("Dashboard error:", err);
+    }
+  };
+
+  const fetchDoctors = async () => {
+    try {
+      const res = await API.get("/doctors");
+      setDoctors(res.data);
+    } catch (err) {
+      console.error("Doctors list error:", err);
     }
   };
 
@@ -65,7 +77,7 @@ function Dashboard() {
       </h1>
 
       {/* 🔥 TOP CARDS */}
-      <div className="grid grid-cols-4 gap-6">
+      <div className="grid grid-cols-5 gap-6">
 
         <motion.div whileHover={{ scale: 1.05 }}
           className="bg-gradient-to-r from-blue-500 to-blue-700 text-white p-6 rounded-xl shadow-lg">
@@ -93,6 +105,12 @@ function Dashboard() {
              (data.claimStats.pending || 0) +
              (data.claimStats.rejected || 0)}
           </p>
+        </motion.div>
+
+        <motion.div whileHover={{ scale: 1.05 }}
+          className="bg-gradient-to-r from-teal-500 to-teal-700 text-white p-6 rounded-xl shadow-lg">
+          <h3>Today's Appts</h3>
+          <p className="text-3xl font-bold">{data.todayAppointments || 0}</p>
         </motion.div>
 
       </div>
@@ -146,6 +164,34 @@ function Dashboard() {
           </ResponsiveContainer>
         </div>
 
+      </div>
+
+      {/* 👨‍⚕️ DOCTORS LIST */}
+      <div className="bg-white p-6 rounded-xl shadow-lg mt-6">
+        <h3 className="font-bold mb-4 text-gray-700 text-xl">Registered Doctors</h3>
+        {doctors.length === 0 ? (
+          <p className="text-gray-500">No doctors registered yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {doctors.map((doc, idx) => (
+              <motion.div 
+                key={idx}
+                whileHover={{ scale: 1.02 }}
+                className="p-4 border rounded-lg shadow flex flex-col space-y-2 bg-blue-50/50"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">
+                    {doc.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-800">{doc.name}</h4>
+                    <span className="text-sm text-gray-500">{doc.email}</span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
     </motion.div>

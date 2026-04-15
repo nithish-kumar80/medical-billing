@@ -8,7 +8,8 @@ const appointmentSchema = new mongoose.Schema({
   status: {
     type: String,
     default: "Scheduled"
-  }
+  },
+  notes: String
 }, { timestamps: true });
 
 module.exports = mongoose.model("Appointment", appointmentSchema);
