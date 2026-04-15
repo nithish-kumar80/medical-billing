@@ -14,6 +14,8 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
+  "https://icy-field-09ddac300.6.azurestaticapps.net",
+  "https://icy-field-09ddac300.azurestaticapps.net",
   process.env.FRONTEND_URL // MUST be set in Azure
 ].filter(Boolean);
 
