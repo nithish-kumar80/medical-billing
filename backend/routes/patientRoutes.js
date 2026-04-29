@@ -456,6 +456,17 @@ router.get("/appointments", async (req, res) => {
   }
 });
 
+// GET TODAY'S APPOINTMENTS FOR ADMIN (must be before parameterized routes)
+router.get("/appointments/today", async (req, res) => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const data = await Appointment.find({ date: today }).sort({ time: 1 });
+    res.json(data);
+  } catch (err) {
+    res.status(500).send("Error fetching today's appointments");
+  }
+});
+
 // GET APPOINTMENTS BY PATIENT
 router.get("/appointments/patient/:name", async (req, res) => {
   try {
@@ -493,7 +504,7 @@ router.get("/history/patient/:name", async (req, res) => {
   try {
     const patientNameRegex = new RegExp(`^${req.params.name}$`, "i");
     const patient = await Patient.findOne({ name: patientNameRegex });
-    
+
     if (!patient) {
       return res.json({ patient: null, visits: [], treatments: [], diagnosis: [] });
     }
@@ -516,15 +527,5 @@ router.get("/history/patient/:name", async (req, res) => {
   }
 });
 
-// GET TODAY'S APPOINTMENTS FOR ADMIN
-router.get("/appointments/today", async (req, res) => {
-  try {
-    const today = new Date().toISOString().split("T")[0];
-    const data = await Appointment.find({ date: today }).sort({ time: 1 });
-    res.json(data);
-  } catch (err) {
-    res.status(500).send("Error fetching today's appointments");
-  }
-});
 
 module.exports = router;

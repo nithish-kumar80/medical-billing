@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, FileText, Activity, Calendar } from "lucide-react";
+import { Home, Users, FileText, Activity, Calendar, Stethoscope } from "lucide-react";
 
 function Sidebar() {
   const location = useLocation();
@@ -20,23 +20,21 @@ function Sidebar() {
   // ✅ DOCTOR MENU
   if (user?.role === "doctor") {
     menu = [
-      { name: "Doctor Dashboard", path: "/doctor-dashboard", icon: <Home /> },
-      { name: "Appointments", path: "/appointments", icon: <Calendar /> },
-      { name: "Add Visit", path: "/add-visit", icon: <Activity /> },
+      { name: "Dashboard", path: "/doctor-dashboard", icon: <Home /> },
     ];
   }
 
   // ✅ PATIENT MENU
   if (user?.role === "patient") {
     menu = [
-      { name: "Book Appointment", path: "/appointments", icon: <Calendar /> },
+      { name: "My Portal", path: "/patient-portal", icon: <Calendar /> },
     ];
   }
 
   return (
     <div className="w-64 bg-white shadow-lg">
       <h1 className="text-xl font-bold p-4 text-blue-600">
-        Hospital System
+        🏥 Hospital System
       </h1>
 
       <nav className="flex flex-col space-y-2 p-4">
