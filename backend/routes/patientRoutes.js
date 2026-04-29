@@ -453,10 +453,11 @@ router.post("/appointments", async (req, res) => {
 // GET ALL APPOINTMENTS
 router.get("/appointments", async (req, res) => {
   try {
-    const data = await Appointment.find().sort({ createdAt: -1 });
+    const data = await Appointment.find();
     res.json(data);
   } catch (err) {
-    res.status(500).send("Error fetching appointments");
+    console.error("GET /appointments error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -464,10 +465,11 @@ router.get("/appointments", async (req, res) => {
 router.get("/appointments/today", async (req, res) => {
   try {
     const today = new Date().toISOString().split("T")[0];
-    const data = await Appointment.find({ date: today }).sort({ time: 1 });
+    const data = await Appointment.find({ date: today });
     res.json(data);
   } catch (err) {
-    res.status(500).send("Error fetching today's appointments");
+    console.error("GET /appointments/today error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -476,12 +478,12 @@ router.get("/appointments/patient/:name", async (req, res) => {
   try {
     const name = decodeURIComponent(req.params.name);
     console.log("🔍 Looking up patient appointments for:", name);
-    const data = await Appointment.find({ patient_id: name }).sort({ createdAt: -1 });
+    const data = await Appointment.find({ patient_id: name });
     console.log("📋 Found:", data.length, "appointments");
     res.json(data);
   } catch (err) {
     console.error("Patient appointments error:", err);
-    res.status(500).send("Error fetching patient appointments");
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -490,12 +492,12 @@ router.get("/appointments/doctor/:name", async (req, res) => {
   try {
     const name = decodeURIComponent(req.params.name);
     console.log("🔍 Looking up doctor appointments for:", name);
-    const data = await Appointment.find({ doctor_name: name }).sort({ createdAt: -1 });
+    const data = await Appointment.find({ doctor_name: name });
     console.log("📋 Found:", data.length, "appointments");
     res.json(data);
   } catch (err) {
     console.error("Doctor appointments error:", err);
-    res.status(500).send("Error fetching doctor appointments");
+    res.status(500).json({ error: err.message });
   }
 });
 
