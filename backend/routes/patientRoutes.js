@@ -335,20 +335,22 @@ router.get("/dashboard", async (req, res) => {
       (a) => a.date === today
     ).length;
 
-    // ✅ OP / IP logic
-    const op = visits;
-    const ip = Math.floor(visits * 0.3);
+    // ✅ OP / IP logic (REAL counts)
+    const ipCount = await Visit.countDocuments({ admitted: true });
+    const opCount = visits - ipCount;
+    const currentlyAdmitted = await Visit.countDocuments({ admitted: true, "dischargeDetails.dischargeDate": { $exists: false } });
 
     // ✅ FINAL RESPONSE (MERGED)
     res.json({
       totalPatients: patients,
       totalVisits: visits,
       totalRevenue: revenue,
-      revenueData,      // 📊 chart
-      claimStats,       // 📊 chart
-      opPatients: op,   // 👨‍⚕️ doctor dashboard
-      ipPatients: ip,   // 👨‍⚕️ doctor dashboard
-      todayAppointments // 👨‍⚕️ doctor dashboard
+      revenueData,
+      claimStats,
+      opPatients: opCount,
+      ipPatients: ipCount,
+      currentlyAdmitted,
+      todayAppointments
     });
 
   } catch (err) {
@@ -467,20 +469,29 @@ router.get("/appointments/today", async (req, res) => {
   }
 });
 
-// GET APPOINTMENTS BY PATIENT
-router.get("/appointments/patient/:name", async (req, res) => {
+// GET APPOINTMENTS BY PATIENT (by user _id)
+router.get("/appointments/patient/:uid", async (req, res) => {
   try {
-    const data = await Appointment.find({ patient_id: req.params.name }).sort({ createdAt: -1 });
+    const data = await Appointment.find({ patient_user_id: req.params.uid }).sort({ createdAt: -1 });
+    // Fallback: also check legacy patient_id field for old data
+    if (data.length === 0) {
+      const legacy = await Appointment.find({ patient_id: req.params.uid }).sort({ createdAt: -1 });
+      return res.json(legacy);
+    }
     res.json(data);
   } catch (err) {
     res.status(500).send("Error fetching patient appointments");
   }
 });
 
-// GET APPOINTMENTS BY DOCTOR
-router.get("/appointments/doctor/:name", async (req, res) => {
+// GET APPOINTMENTS BY DOCTOR (by user _id)
+router.get("/appointments/doctor/:uid", async (req, res) => {
   try {
-    const data = await Appointment.find({ doctor_name: req.params.name }).sort({ createdAt: -1 });
+    const data = await Appointment.find({ doctor_user_id: req.params.uid }).sort({ createdAt: -1 });
+    if (data.length === 0) {
+      const legacy = await Appointment.find({ doctor_name: req.params.uid }).sort({ createdAt: -1 });
+      return res.json(legacy);
+    }
     res.json(data);
   } catch (err) {
     res.status(500).send("Error fetching doctor appointments");
@@ -527,5 +538,134 @@ router.get("/history/patient/:name", async (req, res) => {
   }
 });
 
+
+// =============================
+// 🏥 IN-PATIENT (IP) ROUTES
+// =============================
+
+// ADMIT PATIENT (mark visit as IP)
+router.put("/visits/:visit_id/admit", async (req, res) => {
+  try {
+    const visit = await Visit.findOne({ visit_id: req.params.visit_id });
+    if (!visit) return res.status(404).send("Visit not found");
+
+    visit.admitted = true;
+    visit.admissionDetails = {
+      admissionDate: req.body.admissionDate || new Date(),
+      ward: req.body.ward,
+      roomNumber: req.body.roomNumber,
+      bedNumber: req.body.bedNumber,
+      attendingDoctor: req.body.attendingDoctor
+    };
+    await visit.save();
+
+    res.json({ message: "Patient admitted", visit });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error admitting patient");
+  }
+});
+
+// DISCHARGE PATIENT
+router.put("/visits/:visit_id/discharge", async (req, res) => {
+  try {
+    const visit = await Visit.findOne({ visit_id: req.params.visit_id });
+    if (!visit) return res.status(404).send("Visit not found");
+
+    visit.dischargeDetails = {
+      dischargeDate: req.body.dischargeDate || new Date(),
+      summary: req.body.summary,
+      finalDiagnosis: req.body.finalDiagnosis
+    };
+    await visit.save();
+
+    res.json({ message: "Patient discharged", visit });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error discharging patient");
+  }
+});
+
+// ADD DAILY CHARGE
+router.post("/visits/:visit_id/daily-charges", async (req, res) => {
+  try {
+    const visit = await Visit.findOne({ visit_id: req.params.visit_id });
+    if (!visit) return res.status(404).send("Visit not found");
+
+    if (!visit.dailyCharges) visit.dailyCharges = [];
+    visit.dailyCharges.push({
+      type: req.body.type,
+      amount: req.body.amount,
+      date: req.body.date || new Date()
+    });
+    await visit.save();
+
+    res.json({ message: "Daily charge added", visit });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error adding daily charge");
+  }
+});
+
+// GET DAILY CHARGES FOR A VISIT
+router.get("/visits/:visit_id/daily-charges", async (req, res) => {
+  try {
+    const visit = await Visit.findOne({ visit_id: req.params.visit_id });
+    if (!visit) return res.status(404).send("Visit not found");
+    res.json(visit.dailyCharges || []);
+  } catch (err) {
+    res.status(500).send("Error fetching daily charges");
+  }
+});
+
+// GET ALL CURRENTLY ADMITTED PATIENTS
+router.get("/visits/admitted", async (req, res) => {
+  try {
+    const admittedVisits = await Visit.find({
+      admitted: true,
+      "dischargeDetails.dischargeDate": { $exists: false }
+    }).sort({ "admissionDetails.admissionDate": -1 });
+
+    // Enrich with patient info
+    const enriched = [];
+    for (const v of admittedVisits) {
+      const patient = await Patient.findOne({ patient_id: v.patient_id });
+      enriched.push({ visit: v, patient });
+    }
+    res.json(enriched);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error fetching admitted patients");
+  }
+});
+
+// FINAL IP BILL CALCULATION
+router.get("/visits/:visit_id/final-bill", async (req, res) => {
+  try {
+    const visit = await Visit.findOne({ visit_id: req.params.visit_id });
+    if (!visit) return res.status(404).send("Visit not found");
+
+    const treatments = await Treatment.find({ visit_id: req.params.visit_id });
+    const treatmentTotal = treatments.reduce((sum, t) => sum + (t.cost || 0), 0);
+    const dailyChargesTotal = (visit.dailyCharges || []).reduce((sum, c) => sum + (c.amount || 0), 0);
+
+    let daysAdmitted = 0;
+    if (visit.admissionDetails?.admissionDate) {
+      const endDate = visit.dischargeDetails?.dischargeDate ? new Date(visit.dischargeDetails.dischargeDate) : new Date();
+      daysAdmitted = Math.max(1, Math.ceil((endDate - new Date(visit.admissionDetails.admissionDate)) / (1000 * 60 * 60 * 24)));
+    }
+
+    const grandTotal = treatmentTotal + dailyChargesTotal;
+    const patient = await Patient.findOne({ patient_id: visit.patient_id });
+
+    res.json({
+      visit, patient, treatments,
+      treatmentTotal, dailyChargesTotal, daysAdmitted, grandTotal
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error calculating final bill");
+  }
+});
 
 module.exports = router;

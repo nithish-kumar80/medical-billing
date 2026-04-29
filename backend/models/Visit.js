@@ -12,6 +12,29 @@ const visitSchema = new mongoose.Schema({
   visit_date: {
     type: Date,
     default: Date.now
+  },
+
+  // ===== IN-PATIENT (IP) FIELDS (all optional, default false/undefined) =====
+  admitted: {
+    type: Boolean,
+    default: false
+  },
+  admissionDetails: {
+    admissionDate: Date,
+    ward: String,       // ICU | General | Private
+    roomNumber: String,
+    bedNumber: String,
+    attendingDoctor: String
+  },
+  dailyCharges: [{
+    type: { type: String },  // Room | ICU | Nursing | Medicine
+    amount: Number,
+    date: Date
+  }],
+  dischargeDetails: {
+    dischargeDate: Date,
+    summary: String,
+    finalDiagnosis: String
   }
 });
 

@@ -12,38 +12,30 @@ import ClaimsPage from "./pages/ClaimsPage";
 import PatientPortal from "./pages/PatientPortal";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import Login from "./pages/Login";
+import AdmissionForm from "./pages/AdmissionForm";
+import DailyCharges from "./pages/DailyCharges";
+import DischargePage from "./pages/DischargePage";
+import IPBillPage from "./pages/IPBillPage";
 
 function App() {
   const user = JSON.parse(localStorage.getItem("user"));
 
   return (
     <Routes>
+      {/* LOGIN / REGISTER */}
+      <Route path="/login" element={!user ? <Login /> : <Navigate to="/redirect" />} />
 
-      {/* ✅ LOGIN ROUTE */}
-      <Route
-        path="/login"
-        element={!user ? <Login /> : <Navigate to="/redirect" />}
-      />
+      {/* ROLE REDIRECT */}
+      <Route path="/redirect" element={
+        user ? (
+          user.role === "admin" ? <Navigate to="/dashboard" /> :
+          user.role === "doctor" ? <Navigate to="/doctor-dashboard" /> :
+          <Navigate to="/patient-portal" />
+        ) : <Navigate to="/login" />
+      } />
 
-      {/* ✅ ROLE REDIRECT HANDLER */}
-      <Route
-        path="/redirect"
-        element={
-          user ? (
-            user.role === "admin" ? <Navigate to="/dashboard" /> :
-            user.role === "doctor" ? <Navigate to="/doctor-dashboard" /> :
-            <Navigate to="/patient-portal" />
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
-      />
-
-      {/* ✅ PROTECTED ROUTES */}
-      <Route
-        path="/"
-        element={user ? <Layout /> : <Navigate to="/login" />}
-      >
+      {/* PROTECTED ROUTES */}
+      <Route path="/" element={user ? <Layout /> : <Navigate to="/login" />}>
         {/* ADMIN */}
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="patients" element={<Patients />} />
@@ -54,16 +46,21 @@ function App() {
         <Route path="billing/:visit_id" element={<BillingPage />} />
         <Route path="claims" element={<ClaimsPage />} />
 
-        {/* COMMON */}
+        {/* IP MANAGEMENT (Admin) */}
+        <Route path="admission/:visit_id" element={<AdmissionForm />} />
+        <Route path="daily-charges/:visit_id" element={<DailyCharges />} />
+        <Route path="discharge/:visit_id" element={<DischargePage />} />
+        <Route path="ip-bill/:visit_id" element={<IPBillPage />} />
+
+        {/* PATIENT */}
         <Route path="patient-portal" element={<PatientPortal />} />
 
         {/* DOCTOR */}
         <Route path="doctor-dashboard" element={<DoctorDashboard />} />
       </Route>
 
-      {/* ✅ DEFAULT → LOGIN */}
+      {/* DEFAULT */}
       <Route path="*" element={<Navigate to="/login" />} />
-
     </Routes>
   );
 }

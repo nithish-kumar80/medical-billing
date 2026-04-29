@@ -77,7 +77,7 @@ function Dashboard() {
       </h1>
 
       {/* 🔥 TOP CARDS */}
-      <div className="grid grid-cols-5 gap-6">
+      <div className="grid grid-cols-3 gap-6">
 
         <motion.div whileHover={{ scale: 1.05 }}
           className="bg-gradient-to-r from-blue-500 to-blue-700 text-white p-6 rounded-xl shadow-lg">
@@ -111,6 +111,12 @@ function Dashboard() {
           className="bg-gradient-to-r from-teal-500 to-teal-700 text-white p-6 rounded-xl shadow-lg">
           <h3>Today's Appts</h3>
           <p className="text-3xl font-bold">{data.todayAppointments || 0}</p>
+        </motion.div>
+
+        <motion.div whileHover={{ scale: 1.05 }}
+          className="bg-gradient-to-r from-rose-500 to-rose-700 text-white p-6 rounded-xl shadow-lg">
+          <h3>Currently Admitted</h3>
+          <p className="text-3xl font-bold">{data.currentlyAdmitted || 0}</p>
         </motion.div>
 
       </div>
