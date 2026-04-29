@@ -20,7 +20,7 @@ function DoctorDashboard() {
 
   const fetchAppointments = async () => {
     try {
-      const res = await API.get(`/appointments/doctor/${user._id}`);
+      const res = await API.get(`/appointments/doctor/${encodeURIComponent(user.name)}`);
       setAppointments(res.data);
     } catch (err) { console.error("Doctor Appointments fetch error:", err); }
   };

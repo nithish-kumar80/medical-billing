@@ -471,19 +471,13 @@ router.get("/appointments/today", async (req, res) => {
   }
 });
 
-// GET APPOINTMENTS BY PATIENT (by user _id)
-router.get("/appointments/patient/:uid", async (req, res) => {
+// GET APPOINTMENTS BY PATIENT (by name, encoded in URL)
+router.get("/appointments/patient/:name", async (req, res) => {
   try {
-    // Try new field first
-    let data = await Appointment.find({ patient_user_id: req.params.uid }).sort({ createdAt: -1 });
-    // Fallback: look up user name from _id, then search by name
-    if (data.length === 0) {
-      const User = require("../models/User");
-      const user = await User.findById(req.params.uid);
-      if (user) {
-        data = await Appointment.find({ patient_id: user.name }).sort({ createdAt: -1 });
-      }
-    }
+    const name = decodeURIComponent(req.params.name);
+    console.log("🔍 Looking up patient appointments for:", name);
+    const data = await Appointment.find({ patient_id: name }).sort({ createdAt: -1 });
+    console.log("📋 Found:", data.length, "appointments");
     res.json(data);
   } catch (err) {
     console.error("Patient appointments error:", err);
@@ -491,17 +485,13 @@ router.get("/appointments/patient/:uid", async (req, res) => {
   }
 });
 
-// GET APPOINTMENTS BY DOCTOR (by user _id)
-router.get("/appointments/doctor/:uid", async (req, res) => {
+// GET APPOINTMENTS BY DOCTOR (by name, encoded in URL)
+router.get("/appointments/doctor/:name", async (req, res) => {
   try {
-    let data = await Appointment.find({ doctor_user_id: req.params.uid }).sort({ createdAt: -1 });
-    if (data.length === 0) {
-      const User = require("../models/User");
-      const user = await User.findById(req.params.uid);
-      if (user) {
-        data = await Appointment.find({ doctor_name: user.name }).sort({ createdAt: -1 });
-      }
-    }
+    const name = decodeURIComponent(req.params.name);
+    console.log("🔍 Looking up doctor appointments for:", name);
+    const data = await Appointment.find({ doctor_name: name }).sort({ createdAt: -1 });
+    console.log("📋 Found:", data.length, "appointments");
     res.json(data);
   } catch (err) {
     console.error("Doctor appointments error:", err);

@@ -47,7 +47,7 @@ function PatientPortal() {
 
   const fetchMyAppointments = async () => {
     try {
-      const res = await API.get(`/appointments/patient/${user._id}`);
+      const res = await API.get(`/appointments/patient/${encodeURIComponent(user.name)}`);
       setMyAppointments(res.data);
     } catch (err) { console.error(err); }
   };
