@@ -9,6 +9,7 @@ function PatientPortal() {
   const [doctors, setDoctors] = useState([]);
   const [myAppointments, setMyAppointments] = useState([]);
   const [myHistory, setMyHistory] = useState(null);
+  const [myPrescriptions, setMyPrescriptions] = useState([]);
 
   const [form, setForm] = useState({
     patient_id: user?.name,
@@ -24,7 +25,15 @@ function PatientPortal() {
     if (activeTab === "book") fetchDoctors();
     if (activeTab === "appointments") fetchMyAppointments();
     if (activeTab === "history") fetchMyHistory();
+    if (activeTab === "prescriptions") fetchMyPrescriptions();
   }, [activeTab]);
+
+  const fetchMyPrescriptions = async () => {
+    try {
+      const res = await API.get(`/prescriptions/by-name/${encodeURIComponent(user.name)}`);
+      setMyPrescriptions(res.data);
+    } catch (err) { console.error(err); }
+  };
 
   const fetchDoctors = async () => {
     try {
@@ -75,11 +84,11 @@ function PatientPortal() {
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-3xl font-bold text-gray-800">Welcome, {user?.name}</h2>
         <div className="flex space-x-2 bg-gray-100 p-1 rounded-lg">
-          {["book","appointments","history"].map(tab => (
+          {["book","appointments","prescriptions","history"].map(tab => (
             <button key={tab}
               className={`px-4 py-2 rounded-md transition-all ${activeTab===tab ? 'bg-white shadow text-blue-600 font-bold' : 'text-gray-600'}`}
               onClick={() => setActiveTab(tab)}
-            >{tab === "book" ? "Book Visit" : tab === "appointments" ? "My Appointments" : "Medical History"}</button>
+            >{tab === "book" ? "Book Visit" : tab === "appointments" ? "My Appointments" : tab === "prescriptions" ? "Prescriptions" : "Medical History"}</button>
           ))}
         </div>
       </div>
@@ -139,6 +148,31 @@ function PatientPortal() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* TAB: PRESCRIPTIONS */}
+        {activeTab === "prescriptions" && (
+          <div className="space-y-4">
+            {myPrescriptions.length === 0 ? (
+              <p className="text-gray-500 text-center py-10">No prescriptions yet.</p>
+            ) : myPrescriptions.map(rx => (
+              <motion.div key={rx._id} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} className="bg-white p-5 rounded-xl border shadow-sm">
+                <div className="flex justify-between items-center mb-3">
+                  <div>
+                    <span className="font-bold text-blue-700">Dr. {rx.doctor_name}</span>
+                    <span className="text-xs text-gray-500 ml-2">{new Date(rx.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <table className="w-full text-sm border-collapse">
+                  <thead><tr className="bg-gray-100 text-gray-600 border-b"><th className="text-left p-2">Medicine</th><th className="p-2">Dosage</th><th className="p-2">Frequency</th><th className="p-2">Duration</th></tr></thead>
+                  <tbody>{rx.medications.map((m, i) => (
+                    <tr key={i} className="border-b last:border-0"><td className="p-2 font-medium">{m.name}</td><td className="p-2 text-center">{m.dosage}</td><td className="p-2 text-center">{m.frequency}</td><td className="p-2 text-center">{m.duration}</td></tr>
+                  ))}</tbody>
+                </table>
+                {rx.notes && <p className="text-sm text-gray-600 mt-3 italic bg-gray-50 p-2 rounded">📝 {rx.notes}</p>}
+              </motion.div>
+            ))}
           </div>
         )}
 

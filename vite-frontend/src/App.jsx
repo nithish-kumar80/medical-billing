@@ -16,16 +16,16 @@ import AdmissionForm from "./pages/AdmissionForm";
 import DailyCharges from "./pages/DailyCharges";
 import DischargePage from "./pages/DischargePage";
 import IPBillPage from "./pages/IPBillPage";
+import PrescriptionPage from "./pages/PrescriptionPage";
+import InventoryRequestPage from "./pages/InventoryRequestPage";
 
 function App() {
   const user = JSON.parse(localStorage.getItem("user"));
 
   return (
     <Routes>
-      {/* LOGIN / REGISTER */}
       <Route path="/login" element={!user ? <Login /> : <Navigate to="/redirect" />} />
 
-      {/* ROLE REDIRECT */}
       <Route path="/redirect" element={
         user ? (
           user.role === "admin" ? <Navigate to="/dashboard" /> :
@@ -34,7 +34,6 @@ function App() {
         ) : <Navigate to="/login" />
       } />
 
-      {/* PROTECTED ROUTES */}
       <Route path="/" element={user ? <Layout /> : <Navigate to="/login" />}>
         {/* ADMIN */}
         <Route path="dashboard" element={<Dashboard />} />
@@ -46,11 +45,15 @@ function App() {
         <Route path="billing/:visit_id" element={<BillingPage />} />
         <Route path="claims" element={<ClaimsPage />} />
 
-        {/* IP MANAGEMENT (Admin) */}
+        {/* IP MANAGEMENT */}
         <Route path="admission/:visit_id" element={<AdmissionForm />} />
         <Route path="daily-charges/:visit_id" element={<DailyCharges />} />
         <Route path="discharge/:visit_id" element={<DischargePage />} />
         <Route path="ip-bill/:visit_id" element={<IPBillPage />} />
+
+        {/* PRESCRIPTIONS & INVENTORY */}
+        <Route path="prescriptions" element={<PrescriptionPage />} />
+        <Route path="inventory-requests" element={<InventoryRequestPage />} />
 
         {/* PATIENT */}
         <Route path="patient-portal" element={<PatientPortal />} />
@@ -59,7 +62,6 @@ function App() {
         <Route path="doctor-dashboard" element={<DoctorDashboard />} />
       </Route>
 
-      {/* DEFAULT */}
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );

@@ -8,6 +8,8 @@ const Treatment = require("../models/Treatment");
 const Diagnosis = require("../models/Diagnosis");
 const Claim = require("../models/Claim");
 const Appointment = require("../models/Appointment");
+const Prescription = require("../models/Prescription");
+const InventoryRequest = require("../models/InventoryRequest");
 
 
 
@@ -472,14 +474,19 @@ router.get("/appointments/today", async (req, res) => {
 // GET APPOINTMENTS BY PATIENT (by user _id)
 router.get("/appointments/patient/:uid", async (req, res) => {
   try {
-    const data = await Appointment.find({ patient_user_id: req.params.uid }).sort({ createdAt: -1 });
-    // Fallback: also check legacy patient_id field for old data
+    // Try new field first
+    let data = await Appointment.find({ patient_user_id: req.params.uid }).sort({ createdAt: -1 });
+    // Fallback: look up user name from _id, then search by name
     if (data.length === 0) {
-      const legacy = await Appointment.find({ patient_id: req.params.uid }).sort({ createdAt: -1 });
-      return res.json(legacy);
+      const User = require("../models/User");
+      const user = await User.findById(req.params.uid);
+      if (user) {
+        data = await Appointment.find({ patient_id: user.name }).sort({ createdAt: -1 });
+      }
     }
     res.json(data);
   } catch (err) {
+    console.error("Patient appointments error:", err);
     res.status(500).send("Error fetching patient appointments");
   }
 });
@@ -487,13 +494,17 @@ router.get("/appointments/patient/:uid", async (req, res) => {
 // GET APPOINTMENTS BY DOCTOR (by user _id)
 router.get("/appointments/doctor/:uid", async (req, res) => {
   try {
-    const data = await Appointment.find({ doctor_user_id: req.params.uid }).sort({ createdAt: -1 });
+    let data = await Appointment.find({ doctor_user_id: req.params.uid }).sort({ createdAt: -1 });
     if (data.length === 0) {
-      const legacy = await Appointment.find({ doctor_name: req.params.uid }).sort({ createdAt: -1 });
-      return res.json(legacy);
+      const User = require("../models/User");
+      const user = await User.findById(req.params.uid);
+      if (user) {
+        data = await Appointment.find({ doctor_name: user.name }).sort({ createdAt: -1 });
+      }
     }
     res.json(data);
   } catch (err) {
+    console.error("Doctor appointments error:", err);
     res.status(500).send("Error fetching doctor appointments");
   }
 });
@@ -665,6 +676,102 @@ router.get("/visits/:visit_id/final-bill", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send("Error calculating final bill");
+  }
+});
+
+// =============================
+// 💊 PRESCRIPTION ROUTES
+// =============================
+
+// CREATE PRESCRIPTION
+router.post("/prescriptions", async (req, res) => {
+  try {
+    const p = new Prescription(req.body);
+    await p.save();
+    res.json({ message: "Prescription created", data: p });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error creating prescription");
+  }
+});
+
+// GET PRESCRIPTIONS BY PATIENT (by patient_id like PAT-XXXX)
+router.get("/prescriptions/patient/:patient_id", async (req, res) => {
+  try {
+    const data = await Prescription.find({ patient_id: req.params.patient_id }).sort({ createdAt: -1 });
+    res.json(data);
+  } catch (err) {
+    res.status(500).send("Error fetching prescriptions");
+  }
+});
+
+// GET PRESCRIPTIONS BY PATIENT NAME (for patient portal)
+router.get("/prescriptions/by-name/:name", async (req, res) => {
+  try {
+    const nameRegex = new RegExp(`^${req.params.name}$`, "i");
+    const data = await Prescription.find({ patient_name: nameRegex }).sort({ createdAt: -1 });
+    res.json(data);
+  } catch (err) {
+    res.status(500).send("Error fetching prescriptions");
+  }
+});
+
+// GET PRESCRIPTIONS BY DOCTOR
+router.get("/prescriptions/doctor/:uid", async (req, res) => {
+  try {
+    const data = await Prescription.find({ doctor_user_id: req.params.uid }).sort({ createdAt: -1 });
+    res.json(data);
+  } catch (err) {
+    res.status(500).send("Error fetching prescriptions");
+  }
+});
+
+// =============================
+// 📦 INVENTORY REQUEST ROUTES
+// =============================
+
+// CREATE REQUEST (doctor)
+router.post("/inventory-requests", async (req, res) => {
+  try {
+    const r = new InventoryRequest(req.body);
+    await r.save();
+    res.json({ message: "Request submitted", data: r });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error creating request");
+  }
+});
+
+// GET ALL REQUESTS (admin)
+router.get("/inventory-requests", async (req, res) => {
+  try {
+    const data = await InventoryRequest.find().sort({ createdAt: -1 });
+    res.json(data);
+  } catch (err) {
+    res.status(500).send("Error fetching requests");
+  }
+});
+
+// GET REQUESTS BY DOCTOR
+router.get("/inventory-requests/doctor/:uid", async (req, res) => {
+  try {
+    const data = await InventoryRequest.find({ requested_by_id: req.params.uid }).sort({ createdAt: -1 });
+    res.json(data);
+  } catch (err) {
+    res.status(500).send("Error fetching requests");
+  }
+});
+
+// UPDATE REQUEST STATUS (admin)
+router.patch("/inventory-requests/:id", async (req, res) => {
+  try {
+    const updated = await InventoryRequest.findByIdAndUpdate(req.params.id, {
+      status: req.body.status,
+      admin_notes: req.body.admin_notes
+    }, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).send("Error updating request");
   }
 });
 

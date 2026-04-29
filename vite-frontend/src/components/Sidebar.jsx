@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, FileText, Calendar, Bed } from "lucide-react";
+import { Home, Users, FileText, Calendar, Pill, Package } from "lucide-react";
 
 function Sidebar() {
   const location = useLocation();
@@ -13,12 +13,15 @@ function Sidebar() {
       { name: "Patients", path: "/patients", icon: <Users size={18} /> },
       { name: "Add Patient", path: "/add-patient", icon: <Users size={18} /> },
       { name: "Claims", path: "/claims", icon: <FileText size={18} /> },
+      { name: "Inventory Requests", path: "/inventory-requests", icon: <Package size={18} /> },
     ];
   }
 
   if (user?.role === "doctor") {
     menu = [
       { name: "Dashboard", path: "/doctor-dashboard", icon: <Home size={18} /> },
+      { name: "Prescriptions", path: "/prescriptions", icon: <Pill size={18} /> },
+      { name: "Inventory Requests", path: "/inventory-requests", icon: <Package size={18} /> },
     ];
   }
 
