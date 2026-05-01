@@ -690,7 +690,7 @@ router.post("/prescriptions", async (req, res) => {
 // GET PRESCRIPTIONS BY PATIENT (by patient_id like PAT-XXXX)
 router.get("/prescriptions/patient/:patient_id", async (req, res) => {
   try {
-    const data = await Prescription.find({ patient_id: req.params.patient_id }).sort({ createdAt: -1 });
+    const data = await Prescription.find({ patient_id: req.params.patient_id });
     res.json(data);
   } catch (err) {
     res.status(500).send("Error fetching prescriptions");
@@ -701,7 +701,7 @@ router.get("/prescriptions/patient/:patient_id", async (req, res) => {
 router.get("/prescriptions/by-name/:name", async (req, res) => {
   try {
     const nameRegex = new RegExp(`^${req.params.name}$`, "i");
-    const data = await Prescription.find({ patient_name: nameRegex }).sort({ createdAt: -1 });
+    const data = await Prescription.find({ patient_name: nameRegex });
     res.json(data);
   } catch (err) {
     res.status(500).send("Error fetching prescriptions");
@@ -711,7 +711,7 @@ router.get("/prescriptions/by-name/:name", async (req, res) => {
 // GET PRESCRIPTIONS BY DOCTOR
 router.get("/prescriptions/doctor/:uid", async (req, res) => {
   try {
-    const data = await Prescription.find({ doctor_user_id: req.params.uid }).sort({ createdAt: -1 });
+    const data = await Prescription.find({ doctor_user_id: req.params.uid });
     res.json(data);
   } catch (err) {
     res.status(500).send("Error fetching prescriptions");
@@ -737,7 +737,7 @@ router.post("/inventory-requests", async (req, res) => {
 // GET ALL REQUESTS (admin)
 router.get("/inventory-requests", async (req, res) => {
   try {
-    const data = await InventoryRequest.find().sort({ createdAt: -1 });
+    const data = await InventoryRequest.find();
     res.json(data);
   } catch (err) {
     res.status(500).send("Error fetching requests");
@@ -747,7 +747,7 @@ router.get("/inventory-requests", async (req, res) => {
 // GET REQUESTS BY DOCTOR
 router.get("/inventory-requests/doctor/:uid", async (req, res) => {
   try {
-    const data = await InventoryRequest.find({ requested_by_id: req.params.uid }).sort({ createdAt: -1 });
+    const data = await InventoryRequest.find({ requested_by_id: req.params.uid });
     res.json(data);
   } catch (err) {
     res.status(500).send("Error fetching requests");
