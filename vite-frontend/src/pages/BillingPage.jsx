@@ -4,7 +4,6 @@ import API from "../services/api";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-
 function BillingPage() {
   const { visit_id } = useParams();
 
@@ -67,147 +66,179 @@ function BillingPage() {
     }
   };
 
-  if (!data) return <p className="text-center mt-10">Loading...</p>;
+  if (!data) return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'60vh', background:'#F8FAFC' }}>
+      <div style={{ textAlign:'center' }}>
+        <div style={{ width:40, height:40, border:'3px solid #0D9488', borderTopColor:'transparent', borderRadius:'50%', animation:'spin 1s linear infinite', margin:'0 auto 12px' }} />
+        <p style={{ color:'#64748B', fontSize:14 }}>Loading invoice…</p>
+      </div>
+    </div>
+  );
 
   const { bill, patient, visit, diagnosis, treatments, total } = data;
 
   const tax = total * 0.05;
   const finalTotal = total + tax;
 
+  const isPaid = bill?.status === "Paid";
+
+  const cardStyle = {
+    background:'white',
+    borderRadius:16,
+    boxShadow:'0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.04)',
+    border:'1px solid #E2E8F0',
+    overflow:'hidden',
+  };
+
+  const btnBase = {
+    border:'none', borderRadius:10, padding:'11px 22px', fontWeight:600,
+    cursor:'pointer', fontSize:14, color:'white', flex:1,
+  };
+
+  const thStyle = {
+    padding:'12px 16px', textAlign:'left', fontSize:12, fontWeight:700,
+    color:'#64748B', textTransform:'uppercase', letterSpacing:'0.6px',
+    background:'#F8FAFC', borderBottom:'1px solid #E2E8F0',
+  };
+
+  const tdStyle = {
+    padding:'13px 16px', fontSize:14, color:'#374151', borderBottom:'1px solid #F1F5F9',
+  };
+
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div style={{ background:'#F8FAFC', minHeight:'100vh', padding:'32px 24px' }}>
+      <div style={{ maxWidth:860, margin:'0 auto' }}>
 
-      {/* 🧾 INVOICE */}
-      <div
-        ref={invoiceRef}
-        className="max-w-4xl mx-auto bg-white p-8 shadow-lg rounded"
-      >
-
-        {/* HEADER */}
-        <div className="flex justify-between border-b pb-4 mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-blue-600">
-              City Hospital
-            </h1>
-            <p>Chennai</p>
-          </div>
-
-          <div className="text-right">
-            <h2 className="text-xl font-bold">INVOICE</h2>
-            <p><b>Visit ID:</b> {visit.visit_id}</p>
-            <p>{new Date().toLocaleDateString()}</p>
-          </div>
+        {/* Page title */}
+        <div style={{ marginBottom:24 }}>
+          <h2 style={{ fontSize:26, fontWeight:800, color:'#0F172A', margin:0 }}>Invoice</h2>
+          <p style={{ fontSize:14, color:'#64748B', marginTop:4 }}>Outpatient billing summary</p>
         </div>
 
-        {/* PATIENT */}
-        <div className="grid grid-cols-2 mb-4">
-          <div>
-            <h3 className="font-semibold">Patient</h3>
-            <p>Name: {patient?.name}</p>
-            <p>Age: {patient?.age}</p>
+        {/* ── INVOICE CARD ── */}
+        <div ref={invoiceRef} style={cardStyle}>
+
+          {/* Teal Header */}
+          <div style={{ background:'linear-gradient(135deg,#0D9488,#0891B2)', padding:'24px 28px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div>
+              <h1 style={{ fontSize:22, fontWeight:800, color:'white', margin:0, letterSpacing:'-0.3px' }}>🏥 City Hospital</h1>
+              <p style={{ fontSize:13, color:'rgba(255,255,255,0.75)', marginTop:4 }}>Chennai</p>
+            </div>
+            <div style={{ textAlign:'right' }}>
+              <p style={{ fontSize:12, color:'rgba(255,255,255,0.7)', marginBottom:2, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.6px' }}>Invoice</p>
+              <p style={{ fontSize:15, fontWeight:700, color:'white', fontFamily:'monospace', margin:0 }}>{visit.visit_id}</p>
+              <p style={{ fontSize:12, color:'rgba(255,255,255,0.75)', marginTop:2 }}>{new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'long', year:'numeric' })}</p>
+            </div>
           </div>
 
-          <div>
-            <h3 className="font-semibold">Status</h3>
-            <p>{bill?.status}</p>
+          {/* Patient + Status Grid */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:0, borderBottom:'1px solid #E2E8F0' }}>
+            <div style={{ padding:'20px 24px', borderRight:'1px solid #E2E8F0' }}>
+              <p style={{ fontSize:11, fontWeight:700, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'0.6px', margin:'0 0 10px' }}>Patient</p>
+              <p style={{ fontSize:17, fontWeight:700, color:'#0F172A', margin:'0 0 4px' }}>{patient?.name}</p>
+              <p style={{ fontSize:13, color:'#64748B', margin:0 }}>Age: {patient?.age}</p>
+            </div>
+            <div style={{ padding:'20px 24px' }}>
+              <p style={{ fontSize:11, fontWeight:700, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'0.6px', margin:'0 0 10px' }}>Payment Status</p>
+              <span style={{
+                display:'inline-block', fontSize:13, fontWeight:700, padding:'5px 14px', borderRadius:20,
+                background: isPaid ? '#DCFCE7' : '#FEE2E2',
+                color: isPaid ? '#15803D' : '#B91C1C',
+                border: isPaid ? '1px solid #BBF7D0' : '1px solid #FECACA',
+              }}>
+                {isPaid ? '✓ Paid' : '⏳ Pending'}
+              </span>
+            </div>
           </div>
-        </div>
 
-        {/* DIAGNOSIS */}
-        <div className="mb-4">
-          <h3 className="font-semibold">Diagnosis</h3>
-          {diagnosis.length > 0 ? (
-            diagnosis.map((d, i) => (
-              <p key={i}>
-                {d.code} - {d.description}
-              </p>
-            ))
-          ) : (
-            <p>No diagnosis</p>
-          )}
-        </div>
-
-        {/* TREATMENTS */}
-        <table className="w-full border">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border p-2">Code</th>
-              <th className="border p-2">Description</th>
-              <th className="border p-2">Cost</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {treatments.length > 0 ? (
-              treatments.map((t, i) => (
-                <tr key={i} className="text-center">
-                  <td className="border p-2">{t.code}</td>
-                  <td className="border p-2">{t.description}</td>
-                  <td className="border p-2">₹{t.cost}</td>
-                </tr>
-              ))
+          {/* Diagnosis Section */}
+          <div style={{ padding:'20px 24px', borderBottom:'1px solid #E2E8F0', background:'#FFF7ED' }}>
+            <p style={{ fontSize:11, fontWeight:700, color:'#C2410C', textTransform:'uppercase', letterSpacing:'0.6px', margin:'0 0 10px' }}>Diagnosis (ICD Codes)</p>
+            {diagnosis.length > 0 ? (
+              <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                {diagnosis.map((d, i) => (
+                  <span key={i} style={{
+                    fontSize:13, padding:'5px 12px', borderRadius:8,
+                    background:'white', border:'1px solid #FED7AA', color:'#374151',
+                  }}>
+                    <strong style={{ color:'#EA580C' }}>{d.code}</strong> — {d.description}
+                  </span>
+                ))}
+              </div>
             ) : (
-              <tr>
-                <td colSpan="3" className="text-center p-4">
-                  No treatments
-                </td>
-              </tr>
+              <p style={{ fontSize:13, color:'#94A3B8', margin:0 }}>No diagnosis recorded</p>
             )}
-          </tbody>
-        </table>
+          </div>
 
-        {/* TOTAL */}
-        <div className="text-right mt-4">
-          <p>Subtotal: ₹{total}</p>
-          <p>Tax (5%): ₹{tax}</p>
-          <p className="text-xl font-bold text-green-600">
-            Total: ₹{finalTotal}
-          </p>
+          {/* Treatments Table */}
+          <div style={{ padding:'0' }}>
+            <p style={{ fontSize:11, fontWeight:700, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'0.6px', margin:'0', padding:'16px 24px 0' }}>Treatment Details</p>
+            <table style={{ width:'100%', borderCollapse:'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Code</th>
+                  <th style={thStyle}>Description</th>
+                  <th style={{ ...thStyle, textAlign:'right' }}>Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                {treatments.length > 0 ? (
+                  treatments.map((t, i) => (
+                    <tr key={i} style={{ background: i % 2 === 0 ? 'white' : '#FAFAFA' }}>
+                      <td style={{ ...tdStyle, fontFamily:'monospace', color:'#0D9488', fontWeight:700 }}>{t.code}</td>
+                      <td style={tdStyle}>{t.description}</td>
+                      <td style={{ ...tdStyle, textAlign:'right', fontWeight:700, color:'#0F172A' }}>₹{t.cost}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="3" style={{ ...tdStyle, textAlign:'center', color:'#94A3B8', padding:'28px 16px' }}>No treatments recorded</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Totals Section */}
+          <div style={{ padding:'20px 24px', background:'#F8FAFC', borderTop:'1px solid #E2E8F0' }}>
+            <div style={{ maxWidth:320, marginLeft:'auto' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid #E2E8F0' }}>
+                <span style={{ fontSize:14, color:'#64748B' }}>Subtotal</span>
+                <span style={{ fontSize:14, fontWeight:600, color:'#0F172A' }}>₹{total}</span>
+              </div>
+              <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid #E2E8F0' }}>
+                <span style={{ fontSize:14, color:'#64748B' }}>Tax (5%)</span>
+                <span style={{ fontSize:14, fontWeight:600, color:'#0F172A' }}>₹{tax.toFixed(2)}</span>
+              </div>
+              <div style={{ display:'flex', justifyContent:'space-between', padding:'12px 0' }}>
+                <span style={{ fontSize:16, fontWeight:700, color:'#0F172A' }}>Total Amount</span>
+                <span style={{ fontSize:20, fontWeight:800, color:'#0D9488' }}>₹{finalTotal.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* STATUS */}
-        <div className="mt-4 text-right">
-          <span className={`px-3 py-1 rounded text-white ${
-            bill.status === "Paid" ? "bg-green-500" : "bg-red-500"
-          }`}>
-            {bill.status}
-          </span>
-        </div>
-
-      </div>
-
-      {/* BUTTONS */}
-      <div className="max-w-4xl mx-auto mt-6 flex gap-4 flex-wrap">
-
-        {/* PDF */}
-        <button
-          onClick={downloadPDF}
-          className="bg-blue-600 text-white px-4 py-2 w-full md:w-auto"
-        >
-          Download PDF
-        </button>
-
-        {/* PAY */}
-        {bill.status !== "Paid" && (
-          <button
-            onClick={markPaid}
-            className="bg-green-600 text-white px-4 py-2 w-full md:w-auto"
-          >
-            Mark as Paid
+        {/* Action Buttons */}
+        <div style={{ display:'flex', gap:12, marginTop:20, flexWrap:'wrap' }}>
+          <button onClick={downloadPDF}
+            style={{ ...btnBase, background:'linear-gradient(135deg,#3B82F6,#1D4ED8)' }}>
+            📥 Download PDF
           </button>
-        )}
 
-        {/* CLAIM */}
-        <button
-          onClick={submitClaim}
-          disabled={loadingClaim}
-          className="bg-purple-600 text-white px-4 py-2 w-full md:w-auto"
-        >
-          {loadingClaim ? "Submitting..." : "Submit Insurance Claim"}
-        </button>
+          {bill.status !== "Paid" && (
+            <button onClick={markPaid}
+              style={{ ...btnBase, background:'linear-gradient(135deg,#10B981,#059669)' }}>
+              ✅ Mark as Paid
+            </button>
+          )}
+
+          <button onClick={submitClaim} disabled={loadingClaim}
+            style={{ ...btnBase, background: loadingClaim ? '#94A3B8' : 'linear-gradient(135deg,#8B5CF6,#6D28D9)', cursor: loadingClaim ? 'not-allowed' : 'pointer' }}>
+            {loadingClaim ? "Submitting…" : "🏥 Submit Insurance Claim"}
+          </button>
+        </div>
 
       </div>
-
     </div>
   );
 }

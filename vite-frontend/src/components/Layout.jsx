@@ -1,26 +1,16 @@
-import Navbar from "./Navbar";
-import Sidebar from "./Sidebar";
 import { Outlet } from "react-router-dom";
+import Sidebar from "./Sidebar";
+import Navbar from "./Navbar";
 
 function Layout() {
-  const user = JSON.parse(localStorage.getItem("user"));
-
   return (
-    <div className="flex h-screen">
-
-      {/* ✅ ROLE BASED SIDEBAR */}
-      {user && <Sidebar />}
-
-      <div className="flex-1 flex flex-col">
-
-        {/* ✅ TOP NAVBAR */}
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#F8FAFC" }}>
+      <Sidebar />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <Navbar />
-
-        {/* MAIN CONTENT */}
-        <div className="p-6 bg-gray-100 flex-1 overflow-y-auto">
+        <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px" }}>
           <Outlet />
-        </div>
-
+        </main>
       </div>
     </div>
   );

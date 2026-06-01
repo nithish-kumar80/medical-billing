@@ -1,5 +1,5 @@
-import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Bell, LogOut, Search, Settings } from "lucide-react";
 
 function Navbar() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -10,42 +10,71 @@ function Navbar() {
     window.location.href = "/login";
   };
 
+  const roleColor = user?.role === "admin" ? "#F59E0B" : user?.role === "doctor" ? "#06B6D4" : "#10B981";
+  const roleBg = user?.role === "admin" ? "#FEF3C7" : user?.role === "doctor" ? "#CFFAFE" : "#D1FAE5";
+  const roleText = user?.role === "admin" ? "#92400E" : user?.role === "doctor" ? "#0E7490" : "#065F46";
+
   return (
-    <div className="bg-gray-900 text-white p-4 flex justify-between items-center">
+    <div style={{
+      height: "62px", minHeight: "62px",
+      background: "white",
+      borderBottom: "1px solid #E2E8F0",
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "0 28px",
+      boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
+    }}>
+      {/* Left: Breadcrumb / greeting */}
+      <div>
+        <div style={{ fontSize: "13px", color: "#94A3B8", fontWeight: 500 }}>
+          {new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+        </div>
+        <div style={{ fontSize: "15px", fontWeight: 700, color: "#0F172A", lineHeight: 1.2 }}>
+          {user?.role === "doctor" ? `Welcome back, Dr. ${user?.name}` : `Welcome back, ${user?.name}`}
+        </div>
+      </div>
 
-      <h1 className="font-bold">🏥 Med System</h1>
+      {/* Right: actions */}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        {/* Role badge */}
+        <div style={{
+          background: roleBg, color: roleText,
+          padding: "4px 12px", borderRadius: "999px",
+          fontSize: "11px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase"
+        }}>
+          {user?.role}
+        </div>
 
-      <div className="flex items-center space-x-4">
+        {/* Bell */}
+        <button style={{
+          width: "36px", height: "36px", borderRadius: "10px",
+          border: "1px solid #E2E8F0", background: "white",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          cursor: "pointer", transition: "all 0.15s"
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = "#F8FAFC"; }}
+        onMouseLeave={e => { e.currentTarget.style.background = "white"; }}
+        >
+          <Bell size={16} color="#64748B" />
+        </button>
 
-        {user?.role === "admin" && (
-          <>
-            <Link to="/dashboard" className="hover:text-blue-300 transition">Dashboard</Link>
-            <Link to="/patients" className="hover:text-blue-300 transition">Patients</Link>
-          </>
-        )}
+        {/* Divider */}
+        <div style={{ width: "1px", height: "28px", background: "#E2E8F0" }} />
 
-        {user?.role === "doctor" && (
-          <Link to="/doctor-dashboard" className="hover:text-blue-300 transition">Dashboard</Link>
-        )}
-
-        {user?.role === "patient" && (
-          <Link to="/patient-portal" className="hover:text-blue-300 transition">My Portal</Link>
-        )}
-
-        {user && (
-          <div className="flex items-center space-x-3 ml-4 border-l border-gray-700 pl-4">
-            <span className="text-sm text-gray-400">
-              {user.name} <span className="text-xs bg-gray-700 px-2 py-0.5 rounded-full ml-1">{user.role}</span>
-            </span>
-            <button
-              onClick={logout}
-              className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm font-semibold transition"
-            >
-              Logout
-            </button>
-          </div>
-        )}
-
+        {/* Logout */}
+        <button onClick={logout} style={{
+          display: "flex", alignItems: "center", gap: "6px",
+          background: "linear-gradient(135deg, #EF4444, #DC2626)",
+          color: "white", border: "none",
+          padding: "8px 14px", borderRadius: "9px",
+          fontSize: "13px", fontWeight: 600, cursor: "pointer",
+          transition: "all 0.15s"
+        }}
+        onMouseEnter={e => { e.currentTarget.style.opacity = "0.88"; }}
+        onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
+        >
+          <LogOut size={14} />
+          Logout
+        </button>
       </div>
     </div>
   );
