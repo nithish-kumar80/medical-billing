@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, UserPlus, FileText, Package,
   Pill, CalendarDays, Activity, Stethoscope, ClipboardList,
-  HeartPulse, ChevronRight
+  HeartPulse, ChevronRight, Building2, Hospital
 } from "lucide-react";
 
 function Sidebar() {
@@ -15,6 +15,8 @@ function Sidebar() {
     { label: "Add Patient", path: "/add-patient", icon: UserPlus },
     { label: "Claims", path: "/claims", icon: FileText },
     { label: "Inventory Requests", path: "/inventory-requests", icon: Package },
+    { label: "Payers", path: "/admin/payers", icon: Building2 },
+    { label: "Practices", path: "/admin/practices", icon: Hospital },
   ];
 
   const doctorMenu = [

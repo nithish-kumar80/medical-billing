@@ -69,7 +69,7 @@ function ClaimsPage() {
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
               <tr style={{ background:"#F8FAFC", borderBottom:"1px solid #E2E8F0" }}>
-                {["Visit ID","Insurance / Payer","Amount (₹)","Status","Actions"].map(h => (
+                {["Visit ID","Insurance / Payer","Policy #","Amount (₹)","Status","Actions"].map(h => (
                   <th key={h} style={{ padding:"12px 16px", fontSize:11, fontWeight:700, color:"#64748B", textAlign:"left", textTransform:"uppercase", letterSpacing:"0.07em", whiteSpace:"nowrap" }}>{h}</th>
                 ))}
               </tr>
@@ -78,26 +78,31 @@ function ClaimsPage() {
               {claims.length === 0 ? (
                 <tr><td colSpan={5} style={{ padding:"48px 16px", textAlign:"center", color:"#94A3B8", fontSize:14 }}>No claims found</td></tr>
               ) : claims.map((c, idx) => (
-                <tr key={c._id} style={{ borderBottom:"1px solid #F1F5F9", transition:"background 0.12s" }}
-                  onMouseEnter={e => e.currentTarget.style.background="#F8FAFC"}
-                  onMouseLeave={e => e.currentTarget.style.background="transparent"}>
-                  <td style={{ padding:"14px 16px" }}>
-                    <span style={{ background:"#EFF6FF", color:"#1D4ED8", borderRadius:6, padding:"3px 10px", fontSize:12, fontWeight:700, fontFamily:"monospace" }}>{c.visit_id}</span>
-                  </td>
-                  <td style={{ padding:"14px 16px", fontSize:14, color:"#1E293B", fontWeight:500 }}>{c.payer}</td>
-                  <td style={{ padding:"14px 16px", fontSize:15, fontWeight:700, color:"#0D9488" }}>₹{c.total_amount || 0}</td>
-                  <td style={{ padding:"14px 16px" }}><span style={S.badge(c.status)}>{c.status}</span></td>
-                  <td style={{ padding:"14px 16px" }}>
-                    {c.status === "Pending" ? (
-                      <div style={{ display:"flex", gap:8 }}>
-                        <button onClick={() => updateStatus(c._id,"Approved")} style={{ background:"#D1FAE5", color:"#065F46", border:"none", borderRadius:7, padding:"6px 14px", fontSize:12, fontWeight:700, cursor:"pointer", transition:"all 0.15s" }}
-                          onMouseEnter={e=>e.target.style.background="#A7F3D0"} onMouseLeave={e=>e.target.style.background="#D1FAE5"}>✓ Approve</button>
-                        <button onClick={() => updateStatus(c._id,"Rejected")} style={{ background:"#FEE2E2", color:"#991B1B", border:"none", borderRadius:7, padding:"6px 14px", fontSize:12, fontWeight:700, cursor:"pointer", transition:"all 0.15s" }}
-                          onMouseEnter={e=>e.target.style.background="#FECACA"} onMouseLeave={e=>e.target.style.background="#FEE2E2"}>✕ Reject</button>
-                      </div>
-                    ) : <span style={{ fontSize:12, color:"#94A3B8" }}>—</span>}
-                  </td>
-                </tr>
+                  <tr key={c._id} style={{ borderBottom:"1px solid #F1F5F9", transition:"background 0.12s" }}
+                   onMouseEnter={e => e.currentTarget.style.background="#F8FAFC"}
+                   onMouseLeave={e => e.currentTarget.style.background="transparent"}>
+                   <td style={{ padding:"14px 16px" }}>
+                     <span style={{ background:"#EFF6FF", color:"#1D4ED8", borderRadius:6, padding:"3px 10px", fontSize:12, fontWeight:700, fontFamily:"monospace" }}>{c.visit_id}</span>
+                   </td>
+                   <td style={{ padding:"14px 16px", fontSize:14, color:"#1E293B", fontWeight:500 }}>{c.payer}</td>
+                   <td style={{ padding:"14px 16px", fontSize:13, color:"#64748B", fontFamily:"monospace" }}>
+                     {c.insurancePolicyRef
+                       ? <span style={{ background:"#F0FDF4", color:"#15803D", borderRadius:6, padding:"2px 8px", fontSize:12, fontWeight:600 }}>#&#8203;{typeof c.insurancePolicyRef === "object" ? c.insurancePolicyRef.policyNumber || "—" : "—"}</span>
+                       : <span style={{ color:"#CBD5E1" }}>—</span>}
+                   </td>
+                   <td style={{ padding:"14px 16px", fontSize:15, fontWeight:700, color:"#0D9488" }}>₹{c.total_amount || 0}</td>
+                   <td style={{ padding:"14px 16px" }}><span style={S.badge(c.status)}>{c.status}</span></td>
+                   <td style={{ padding:"14px 16px" }}>
+                     {c.status === "Pending" ? (
+                       <div style={{ display:"flex", gap:8 }}>
+                         <button onClick={() => updateStatus(c._id,"Approved")} style={{ background:"#D1FAE5", color:"#065F46", border:"none", borderRadius:7, padding:"6px 14px", fontSize:12, fontWeight:700, cursor:"pointer", transition:"all 0.15s" }}
+                           onMouseEnter={e=>e.target.style.background="#A7F3D0"} onMouseLeave={e=>e.target.style.background="#D1FAE5"}>✓ Approve</button>
+                         <button onClick={() => updateStatus(c._id,"Rejected")} style={{ background:"#FEE2E2", color:"#991B1B", border:"none", borderRadius:7, padding:"6px 14px", fontSize:12, fontWeight:700, cursor:"pointer", transition:"all 0.15s" }}
+                           onMouseEnter={e=>e.target.style.background="#FECACA"} onMouseLeave={e=>e.target.style.background="#FEE2E2"}>✕ Reject</button>
+                       </div>
+                     ) : <span style={{ fontSize:12, color:"#94A3B8" }}>—</span>}
+                   </td>
+                 </tr>
               ))}
             </tbody>
           </table>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../services/api";
 import { useParams, useNavigate } from "react-router-dom";
+import CodeAutocomplete from "../components/CodeAutocomplete";
 
 const inp = { border:"1.5px solid #E2E8F0", borderRadius:9, padding:"10px 14px", fontSize:14, outline:"none", background:"#F8FAFC", fontFamily:"inherit", color:"#0F172A", width:"100%", transition:"border-color 0.15s" };
 const lbl = { display:"block", fontSize:12, fontWeight:600, color:"#374151", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.05em" };
@@ -66,8 +67,12 @@ function AddVisit() {
           <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
             <div>
               <label style={lbl}>ICD Code</label>
-              <input name="diagnosis_code" placeholder="e.g. A01" value={form.diagnosis_code} onChange={handleChange} style={inp}
-                onFocus={e=>e.target.style.borderColor="#0D9488"} onBlur={e=>e.target.style.borderColor="#E2E8F0"} />
+              <CodeAutocomplete
+                type="icd"
+                value={form.diagnosis_code}
+                placeholder="Search ICD-10 code or description…"
+                onSelect={r => setForm(f => ({ ...f, diagnosis_code: r.code, diagnosis_desc: r.description }))}
+              />
             </div>
             <div>
               <label style={lbl}>Description</label>
@@ -82,9 +87,13 @@ function AddVisit() {
           <div style={sectionTitle}>Treatment (CPT)</div>
           <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
             <div>
-              <label style={lbl}>CPT Code</label>
-              <input name="treatment_code" placeholder="e.g. T100" value={form.treatment_code} onChange={handleChange} style={inp}
-                onFocus={e=>e.target.style.borderColor="#0D9488"} onBlur={e=>e.target.style.borderColor="#E2E8F0"} />
+              <label style={lbl}>CPT / HCPCS Code</label>
+              <CodeAutocomplete
+                type="cpt"
+                value={form.treatment_code}
+                placeholder="Search CPT/HCPCS code or description…"
+                onSelect={r => setForm(f => ({ ...f, treatment_code: r.code, treatment_desc: r.description }))}
+              />
             </div>
             <div>
               <label style={lbl}>Description</label>

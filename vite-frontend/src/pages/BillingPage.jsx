@@ -82,6 +82,14 @@ function BillingPage() {
 
   const isPaid = bill?.status === "Paid";
 
+  // ── codeValidation badge helper (only shown on visits that have this field) ──
+  const VerifiedBadge = ({ verified }) => {
+    if (verified === undefined || verified === null) return null;
+    return verified
+      ? <span style={{ background:'#DCFCE7', color:'#15803D', borderRadius:999, padding:'1px 7px', fontSize:10, fontWeight:700, marginLeft:6, verticalAlign:'middle' }}>✓ Verified</span>
+      : <span style={{ background:'#FEF3C7', color:'#92400E', borderRadius:999, padding:'1px 7px', fontSize:10, fontWeight:700, marginLeft:6, verticalAlign:'middle' }}>⚠ Unverified</span>;
+  };
+
   const cardStyle = {
     background:'white',
     borderRadius:16,
@@ -161,7 +169,9 @@ function BillingPage() {
                     fontSize:13, padding:'5px 12px', borderRadius:8,
                     background:'white', border:'1px solid #FED7AA', color:'#374151',
                   }}>
-                    <strong style={{ color:'#EA580C' }}>{d.code}</strong> — {d.description}
+                    <strong style={{ color:'#EA580C' }}>{d.code}</strong>
+                    <VerifiedBadge verified={visit?.codeValidation?.icdVerified} />
+                    {' — '}{d.description}
                   </span>
                 ))}
               </div>
@@ -185,7 +195,10 @@ function BillingPage() {
                 {treatments.length > 0 ? (
                   treatments.map((t, i) => (
                     <tr key={i} style={{ background: i % 2 === 0 ? 'white' : '#FAFAFA' }}>
-                      <td style={{ ...tdStyle, fontFamily:'monospace', color:'#0D9488', fontWeight:700 }}>{t.code}</td>
+                      <td style={{ ...tdStyle, fontFamily:'monospace', color:'#0D9488', fontWeight:700 }}>
+                        {t.code}
+                        <VerifiedBadge verified={visit?.codeValidation?.cptVerified} />
+                      </td>
                       <td style={tdStyle}>{t.description}</td>
                       <td style={{ ...tdStyle, textAlign:'right', fontWeight:700, color:'#0F172A' }}>₹{t.cost}</td>
                     </tr>

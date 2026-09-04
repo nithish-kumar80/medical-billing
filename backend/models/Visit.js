@@ -35,6 +35,14 @@ const visitSchema = new mongoose.Schema({
     dischargeDate: Date,
     summary: String,
     finalDiagnosis: String
+  },
+
+  // ===== NEW OPTIONAL FIELDS (additive — old visits unaffected) =====
+  practiceRef: { type: mongoose.Schema.Types.ObjectId, ref: "Practice" },
+  renderingProviderRef: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  codeValidation: {
+    icdVerified: Boolean,
+    cptVerified: Boolean
   }
 });
 

@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import { motion } from "framer-motion";
+import { Shield, ShieldCheck, ShieldOff, Plus, X } from "lucide-react";
+
+const planColors = { HMO:"#3B82F6", PPO:"#10B981", EPO:"#8B5CF6", POS:"#F59E0B", Medicare:"#0D9488", Medicaid:"#6366F1", SelfPay:"#64748B", Other:"#94A3B8" };
+const POLICY_EMPTY = { policyNumber:"", groupNumber:"", planType:"Other", policyRank:"primary", payer:"", subscriber:{ memberId:"", firstName:"", lastName:"", isPatient:true, relationshipToPatient:"self" }, coverage:{ effectiveDate:"", terminationDate:"", copayCents:0, coinsurancePercent:0, deductibleCents:0 } };
 
 function PatientHistory() {
   const { id } = useParams();
@@ -9,6 +13,12 @@ function PatientHistory() {
   const [data, setData] = useState(null);
   const [diagnosis, setDiagnosis] = useState({});
   const [treatments, setTreatments] = useState({});
+  const [activeTab, setActiveTab] = useState("visits"); // "visits" | "insurance"
+  const [policies, setPolicies] = useState([]);
+  const [payers, setPayers] = useState([]);
+  const [showPolicyForm, setShowPolicyForm] = useState(false);
+  const [policyForm, setPolicyForm] = useState(POLICY_EMPTY);
+  const [savingPolicy, setSavingPolicy] = useState(false);
 
   useEffect(() => { fetchHistory(); }, []);
 
@@ -16,6 +26,13 @@ function PatientHistory() {
     try {
       const res = await API.get(`/patient-history/${id}`);
       setData(res.data);
+      // Fetch insurance policies using patient _id
+      try {
+        const polRes = await API.get(`/patients/${res.data.patient._id}/insurance-policies`);
+        setPolicies(polRes.data);
+      } catch(e) { /* policies optional */ }
+      // Load payers for the add-policy form
+      try { const pr = await API.get("/payers"); setPayers(pr.data); } catch(e){}
       const diagMap = {}, treatMap = {};
       for (let v of res.data.visits) {
         const d = await API.get(`/diagnosis/${v.visit_id}`);
@@ -26,6 +43,19 @@ function PatientHistory() {
       setDiagnosis(diagMap);
       setTreatments(treatMap);
     } catch (err) { console.error("Error fetching history:", err); }
+  };
+
+  const handleAddPolicy = async (e) => {
+    e.preventDefault();
+    setSavingPolicy(true);
+    try {
+      await API.post(`/patients/${data.patient._id}/insurance-policies`, policyForm);
+      const polRes = await API.get(`/patients/${data.patient._id}/insurance-policies`);
+      setPolicies(polRes.data);
+      setShowPolicyForm(false);
+      setPolicyForm(POLICY_EMPTY);
+    } catch(err) { alert("Error adding policy"); }
+    finally { setSavingPolicy(false); }
   };
 
   if (!data) return (
@@ -83,8 +113,113 @@ function PatientHistory() {
           </div>
         </motion.div>
 
-        {/* Visits */}
-        {data.visits.length > 0 ? data.visits.map((v, idx) => {
+        {/* ── Tab switcher ── */}
+        <div style={{ display:"flex", gap:4, marginBottom:20, background:"white", borderRadius:12, padding:4, border:"1px solid #E2E8F0", width:"fit-content" }}>
+          {[{id:"visits",label:"Visit History"},{id:"insurance",label:"Insurance"}].map(tab=>(
+            <button key={tab.id} onClick={()=>setActiveTab(tab.id)} style={{
+              padding:"8px 18px", borderRadius:9, border:"none", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s",
+              background: activeTab===tab.id ? "linear-gradient(135deg,#0D9488,#0891B2)" : "transparent",
+              color: activeTab===tab.id ? "white" : "#64748B"
+            }}>{tab.label}</button>
+          ))}
+        </div>
+
+        {/* ── Insurance Tab Panel ── */}
+        {activeTab === "insurance" && (
+          <div>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+              <div style={{ fontSize:15, fontWeight:700, color:"#0F172A" }}>Insurance Policies</div>
+              <button onClick={()=>setShowPolicyForm(true)} style={{ background:"linear-gradient(135deg,#0D9488,#0891B2)", color:"white", border:"none", borderRadius:9, padding:"8px 16px", fontSize:12, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:5, fontFamily:"inherit" }}>
+                <Plus size={13}/> Add Policy
+              </button>
+            </div>
+
+            {policies.length === 0 ? (
+              <div style={{ background:"white", borderRadius:14, border:"1px solid #E2E8F0", padding:"40px 24px", textAlign:"center", color:"#94A3B8" }}>
+                <Shield size={36} style={{ marginBottom:10, opacity:0.4 }}/>
+                <p style={{ fontSize:14, margin:0 }}>No insurance on file</p>
+                <p style={{ fontSize:12, marginTop:4 }}>Click "Add Policy" to link a policy to this patient.</p>
+              </div>
+            ) : (
+              <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                {policies.map(pol => {
+                  const rank = pol.policyRank;
+                  const pc = planColors[pol.planType] || "#64748B";
+                  const elStatus = pol.eligibility?.status || "not_checked";
+                  const elIcon = elStatus==="active" ? <ShieldCheck size={14} color="#15803D"/> : elStatus==="inactive" ? <ShieldOff size={14} color="#B91C1C"/> : <Shield size={14} color="#94A3B8"/>;
+                  return (
+                    <div key={pol._id} style={{ background:"white", borderRadius:14, border:"1px solid #E2E8F0", padding:"16px 20px", boxShadow:"0 1px 3px rgba(0,0,0,0.05)" }}>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
+                        <div>
+                          <div style={{ fontSize:15, fontWeight:700, color:"#0F172A", marginBottom:4 }}>{pol.payer?.payerName || "Unknown Payer"}</div>
+                          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                            <span style={{ background:`${pc}18`, color:pc, borderRadius:999, padding:"2px 8px", fontSize:11, fontWeight:700 }}>{pol.planType}</span>
+                            <span style={{ background: rank==="primary"?"#DCFCE7":"#F1F5F9", color: rank==="primary"?"#15803D":"#475569", borderRadius:999, padding:"2px 8px", fontSize:11, fontWeight:700, textTransform:"capitalize" }}>{rank}</span>
+                            <span style={{ display:"flex", alignItems:"center", gap:4, fontSize:11, color:"#64748B" }}>{elIcon} {elStatus.replace("_"," ")}</span>
+                          </div>
+                        </div>
+                        <div style={{ textAlign:"right", fontSize:12, color:"#64748B" }}>
+                          <div style={{ fontFamily:"monospace", fontWeight:700, color:"#0F172A", fontSize:13 }}>#{pol.policyNumber}</div>
+                          {pol.groupNumber && <div>Group: {pol.groupNumber}</div>}
+                        </div>
+                      </div>
+                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, borderTop:"1px solid #F1F5F9", paddingTop:10 }}>
+                        <div style={{ fontSize:11, color:"#94A3B8", textTransform:"uppercase", fontWeight:600 }}>Member ID<div style={{ fontSize:13, color:"#0F172A", fontFamily:"monospace", marginTop:2 }}>{pol.subscriber?.memberId||"—"}</div></div>
+                        <div style={{ fontSize:11, color:"#94A3B8", textTransform:"uppercase", fontWeight:600 }}>Copay<div style={{ fontSize:13, color:"#0F172A", marginTop:2 }}>₹{((pol.coverage?.copayCents||0)/100).toFixed(0)}</div></div>
+                        <div style={{ fontSize:11, color:"#94A3B8", textTransform:"uppercase", fontWeight:600 }}>Deductible<div style={{ fontSize:13, color:"#0F172A", marginTop:2 }}>₹{((pol.coverage?.deductibleCents||0)/100).toFixed(0)}</div></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Add policy modal */}
+            {showPolicyForm && (
+              <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.4)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:20 }}>
+                <div style={{ background:"white", borderRadius:20, width:"100%", maxWidth:520, maxHeight:"90vh", overflowY:"auto", boxShadow:"0 20px 60px rgba(0,0,0,0.2)" }}>
+                  <div style={{ padding:"24px 28px 0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                    <h2 style={{ fontSize:17, fontWeight:700, color:"#0F172A", margin:0 }}>Add Insurance Policy</h2>
+                    <button onClick={()=>setShowPolicyForm(false)} style={{ background:"none", border:"none", cursor:"pointer", color:"#94A3B8" }}><X size={20}/></button>
+                  </div>
+                  <form onSubmit={handleAddPolicy} style={{ padding:"20px 28px 28px", display:"flex", flexDirection:"column", gap:13 }}>
+                    <div><label style={{display:"block",fontSize:12,fontWeight:600,color:"#374151",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.05em"}}>Payer *</label>
+                      <select required value={policyForm.payer} onChange={e=>setPolicyForm(f=>({...f,payer:e.target.value}))} style={{border:"1.5px solid #E2E8F0",borderRadius:9,padding:"10px 14px",fontSize:14,outline:"none",background:"#F8FAFC",width:"100%",fontFamily:"inherit"}}>
+                        <option value="">-- Select Payer --</option>
+                        {payers.map(p=><option key={p._id} value={p._id}>{p.payerName}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                      <div><label style={{display:"block",fontSize:12,fontWeight:600,color:"#374151",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.05em"}}>Policy Number *</label><input required value={policyForm.policyNumber} onChange={e=>setPolicyForm(f=>({...f,policyNumber:e.target.value}))} style={{border:"1.5px solid #E2E8F0",borderRadius:9,padding:"10px 14px",fontSize:14,outline:"none",background:"#F8FAFC",width:"100%",fontFamily:"inherit",boxSizing:"border-box"}} placeholder="POL-12345"/></div>
+                      <div><label style={{display:"block",fontSize:12,fontWeight:600,color:"#374151",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.05em"}}>Group Number</label><input value={policyForm.groupNumber||""} onChange={e=>setPolicyForm(f=>({...f,groupNumber:e.target.value}))} style={{border:"1.5px solid #E2E8F0",borderRadius:9,padding:"10px 14px",fontSize:14,outline:"none",background:"#F8FAFC",width:"100%",fontFamily:"inherit",boxSizing:"border-box"}} placeholder="GRP-001"/></div>
+                    </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                      <div><label style={{display:"block",fontSize:12,fontWeight:600,color:"#374151",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.05em"}}>Plan Type</label>
+                        <select value={policyForm.planType} onChange={e=>setPolicyForm(f=>({...f,planType:e.target.value}))} style={{border:"1.5px solid #E2E8F0",borderRadius:9,padding:"10px 14px",fontSize:14,outline:"none",background:"#F8FAFC",width:"100%",fontFamily:"inherit"}}>
+                          {["HMO","PPO","EPO","POS","Medicare","Medicaid","SelfPay","Other"].map(t=><option key={t}>{t}</option>)}
+                        </select>
+                      </div>
+                      <div><label style={{display:"block",fontSize:12,fontWeight:600,color:"#374151",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.05em"}}>Rank</label>
+                        <select value={policyForm.policyRank} onChange={e=>setPolicyForm(f=>({...f,policyRank:e.target.value}))} style={{border:"1.5px solid #E2E8F0",borderRadius:9,padding:"10px 14px",fontSize:14,outline:"none",background:"#F8FAFC",width:"100%",fontFamily:"inherit"}}>
+                          {["primary","secondary","tertiary"].map(r=><option key={r}>{r}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div><label style={{display:"block",fontSize:12,fontWeight:600,color:"#374151",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.05em"}}>Member ID *</label><input required value={policyForm.subscriber.memberId} onChange={e=>setPolicyForm(f=>({...f,subscriber:{...f.subscriber,memberId:e.target.value}}))} style={{border:"1.5px solid #E2E8F0",borderRadius:9,padding:"10px 14px",fontSize:14,outline:"none",background:"#F8FAFC",width:"100%",fontFamily:"inherit",boxSizing:"border-box"}} placeholder="MEM-0001"/></div>
+                    <button type="submit" disabled={savingPolicy} style={{ background:"linear-gradient(135deg,#0D9488,#0891B2)", color:"white", border:"none", borderRadius:10, padding:"12px", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"inherit", marginTop:4 }}>
+                      {savingPolicy ? "Saving…" : "Add Policy"}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Visits Tab Panel ── */}
+        {activeTab === "visits" && (
+          <div>
+          {data.visits.length > 0 ? data.visits.map((v, idx) => {
           const visitDiagnosis = diagnosis[v.visit_id] || [];
           const visitTreatments = treatments[v.visit_id] || [];
           const total = visitTreatments.reduce((sum, t) => sum + (t.cost || 0), 0);
@@ -227,6 +362,8 @@ function PatientHistory() {
           <div style={{ textAlign:'center', padding:'60px 20px', color:'#94A3B8' }}>
             <p style={{ fontSize:48 }}>📋</p>
             <p style={{ fontSize:16, fontWeight:600 }}>No visits found</p>
+          </div>
+        )}
           </div>
         )}
       </div>

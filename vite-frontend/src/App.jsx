@@ -18,6 +18,8 @@ import DischargePage from "./pages/DischargePage";
 import IPBillPage from "./pages/IPBillPage";
 import PrescriptionPage from "./pages/PrescriptionPage";
 import InventoryRequestPage from "./pages/InventoryRequestPage";
+import PayerManagement from "./pages/admin/PayerManagement";
+import PracticeManagement from "./pages/admin/PracticeManagement";
 
 function App() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -54,6 +56,10 @@ function App() {
         {/* PRESCRIPTIONS & INVENTORY */}
         <Route path="prescriptions" element={<PrescriptionPage />} />
         <Route path="inventory-requests" element={<InventoryRequestPage />} />
+
+        {/* ADMIN — new additive routes */}
+        <Route path="admin/payers" element={<PayerManagement />} />
+        <Route path="admin/practices" element={<PracticeManagement />} />
 
         {/* PATIENT */}
         <Route path="patient-portal" element={<PatientPortal />} />

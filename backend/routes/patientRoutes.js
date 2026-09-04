@@ -10,6 +10,11 @@ const Claim = require("../models/Claim");
 const Appointment = require("../models/Appointment");
 const Prescription = require("../models/Prescription");
 const InventoryRequest = require("../models/InventoryRequest");
+// ── New reference models (additive) ──
+const IcdCode = require("../models/IcdCode");
+const CptCode = require("../models/CptCode");
+const InsurancePolicy = require("../models/InsurancePolicy");
+const Payer = require("../models/Payer");
 
 
 
@@ -80,6 +85,25 @@ router.post("/visits", async (req, res) => {
     });
 
     await newVisit.save();
+
+    // ── Additive: set codeValidation flag if codes provided ──
+    if (req.body.diagnosis_code || req.body.treatment_code) {
+      try {
+        const icdMatch = req.body.diagnosis_code
+          ? await IcdCode.findOne({ code: req.body.diagnosis_code })
+          : null;
+        const cptMatch = req.body.treatment_code
+          ? await CptCode.findOne({ code: req.body.treatment_code })
+          : null;
+        newVisit.codeValidation = {
+          icdVerified: !!icdMatch,
+          cptVerified: !!cptMatch
+        };
+        await newVisit.save();
+      } catch (cvErr) {
+        console.warn("codeValidation check skipped:", cvErr.message);
+      }
+    }
 
     // ✅ IMPORTANT FIX
     res.json({
@@ -386,6 +410,24 @@ router.post("/claims/:visit_id", async (req, res) => {
       payer: req.body.payer,
       total_amount: bill?.total_amount || 0
     });
+
+    // ── Additive: auto-fill payerRef/insurancePolicyRef if patient has an active policy ──
+    try {
+      const patient = await Patient.findOne({ patient_id: visit.patient_id });
+      if (patient) {
+        const activePolicy = await InsurancePolicy
+          .findOne({ patient: patient._id, isActive: true })
+          .populate("payer");
+        if (activePolicy) {
+          newClaim.insurancePolicyRef = activePolicy._id;
+          newClaim.payerRef = activePolicy.payer._id;
+          // Keep writing payer string for backward compatibility
+          if (!newClaim.payer) newClaim.payer = activePolicy.payer.payerName;
+        }
+      }
+    } catch (policyErr) {
+      console.warn("Policy lookup skipped:", policyErr.message);
+    }
 
     await newClaim.save();
 

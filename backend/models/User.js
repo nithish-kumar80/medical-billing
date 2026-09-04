@@ -8,6 +8,13 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: ["admin", "doctor", "patient"]
+  },
+
+  // ===== NEW OPTIONAL SUB-OBJECT (additive — existing users unaffected) =====
+  doctorDetails: {
+    npi:      { type: String, match: /^\d{10}$/ },
+    specialty: String,
+    practices: [{ type: mongoose.Schema.Types.ObjectId, ref: "Practice" }]
   }
 });
 

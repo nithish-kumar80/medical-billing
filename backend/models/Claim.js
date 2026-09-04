@@ -17,7 +17,11 @@ const ClaimSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
-  }
+  },
+
+  // ===== NEW OPTIONAL FIELDS (additive — old claims unaffected) =====
+  payerRef: { type: mongoose.Schema.Types.ObjectId, ref: "Payer" },
+  insurancePolicyRef: { type: mongoose.Schema.Types.ObjectId, ref: "InsurancePolicy" }
 });
 
 module.exports = mongoose.model("Claim", ClaimSchema);

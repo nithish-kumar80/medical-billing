@@ -82,6 +82,11 @@ app.get("/api/health", (req, res) => {
  */
 app.use("/api", patientRoutes);
 app.use("/api", authRoutes);
+// ── New additive route files ──
+app.use("/api", require("./routes/payerRoutes"));
+app.use("/api", require("./routes/practiceRoutes"));
+app.use("/api", require("./routes/insurancePolicyRoutes"));
+app.use("/api", require("./routes/codeSearchRoutes"));
 
 /**
  * ✅ Start Server (Azure uses PORT automatically)
