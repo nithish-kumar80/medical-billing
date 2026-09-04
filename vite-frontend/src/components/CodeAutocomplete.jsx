@@ -24,8 +24,10 @@ function CodeAutocomplete({ type, onSelect, placeholder, value }) {
       setLoading(true);
       try {
         const res = await API.get(`/codes/${type}/search?q=${encodeURIComponent(query)}`);
-        setResults(res.data);
-        setOpen(res.data.length > 0);
+        // Cosmos DB wraps results in { value: [...], Count: N } — unwrap it
+        const data = Array.isArray(res.data) ? res.data : (res.data?.value || []);
+        setResults(data);
+        setOpen(data.length > 0);
       } catch { setResults([]); setOpen(false); }
       finally { setLoading(false); }
     }, 250);

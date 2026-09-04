@@ -27,7 +27,8 @@ router.get("/codes/icd/search", async (req, res) => {
       }).limit(15);
     }
 
-    res.json(results);
+    // Explicitly convert to plain array (Cosmos DB can wrap Mongoose results)
+    res.json(Array.from(results));
   } catch (err) {
     console.error("ICD search error:", err);
     res.status(500).json({ error: "Error searching ICD codes" });
@@ -55,7 +56,7 @@ router.get("/codes/cpt/search", async (req, res) => {
       }).limit(15);
     }
 
-    res.json(results);
+    res.json(Array.from(results));
   } catch (err) {
     console.error("CPT search error:", err);
     res.status(500).json({ error: "Error searching CPT codes" });
